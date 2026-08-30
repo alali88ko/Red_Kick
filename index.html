@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#EFEAE2;--panel:#FFF;--line:#E2E0DA;--ink:#111B21;--mut:#667781;--out:#D9FDD3;--acc:#1F7A5C;--err:#B3452F;--seen:#34B7F1}
@@ -59,7 +59,7 @@ input,textarea{font-family:inherit}
 #newChatBtn:active{transform:translateY(1px)}
 #chatList{flex:1;overflow-y:auto}
 .list-empty{padding:30px 16px;text-align:center;color:var(--mut);font-size:13px}
-.chat-item{display:flex;gap:10px;width:100%;text-align:start;padding:10px 14px;border-bottom:1px solid #F0EDE7;align-items:center}
+.chat-item{display:flex;gap:10px;width:100%;text-align:start;padding:10px 14px;border-bottom:1px solid #F0EDE7;align-items:center;user-select:none;-webkit-user-select:none;touch-action:pan-y}
 .chat-item:hover{background:#F7F6F2}
 .chat-item.active{background:#F0F2F5}
 .ci-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -98,7 +98,7 @@ input,textarea{font-family:inherit}
 .msg.out .stwrap[data-st="seen"]{color:var(--seen)}
 .st{width:16px;height:12px}
 .dsep{align-self:center;margin:12px 0 8px;font-size:11px;color:var(--mut);background:rgba(255,255,255,.9);padding:3px 12px;border-radius:99px;box-shadow:0 1px .5px rgba(11,20,26,.1)}
-.no-msgs{margin:auto;color:var(--mut);font-size:13px;text-align:center;max-width:300px;line-height:1.8;border:1.5px dashed #C9C5BC;padding:14px 20px;border-radius:12px;background:rgba(255,255,255,.6)}
+.no-msgs{margin:auto;color:var(--mut);font-size:13px;text-align:center;max-width:320px;line-height:1.8;border:1.5px dashed #C9C5BC;padding:14px 20px;border-radius:12px;background:rgba(255,255,255,.6)}
 .tdots{display:flex;gap:4px;padding:12px 14px;align-items:center}
 .tdots span{width:6px;height:6px;border-radius:50%;background:#8696A0;animation:tb 1s infinite}
 .tdots span:nth-child(2){animation-delay:.15s}.tdots span:nth-child(3){animation-delay:.3s}
@@ -128,6 +128,9 @@ input,textarea{font-family:inherit}
 .mbtn{width:100%;margin-top:12px;background:var(--acc);color:#fff;border-radius:11px;padding:11px;font-weight:600;font-size:15px}
 .mbtn:disabled{opacity:.6;cursor:default}
 .merr{color:var(--err);font-size:12.5px;margin-top:9px;line-height:1.6}
+.dbtns{display:flex;gap:10px;margin-top:14px}
+.dbtns .mbtn{margin-top:0}
+.btn-red{background:var(--err)}
 
 /* الإعدادات */
 .setrow{display:flex;align-items:center;gap:12px;width:100%;text-align:start;padding:10px;border:1px solid var(--line);border-radius:12px;background:#FAFAF8;margin-top:12px}
@@ -185,7 +188,7 @@ input,textarea{font-family:inherit}
 <section id="welcome">
   <form class="wcard" id="wForm" novalidate>
     <div class="wtitle">مِرسال</div>
-    <p class="wsub">راسل أي شخص مباشرةً بمعرّفه.<br>أدخل اسمك للبدء.</p>
+    <p class="wsub">راسل أي شخص بمعرّفه — تصل رسائلك حتى لو كان غير متصل.<br>أدخل اسمك للبدء.</p>
     <input id="wName" maxlength="24" autocomplete="off" placeholder="اسمك">
     <button class="wbtn" type="submit">دخول</button>
     <p class="werr" id="wErr" hidden>اكتب اسماً من حرفين على الأقل.</p>
@@ -245,7 +248,19 @@ input,textarea{font-family:inherit}
     <p>أدخل معرّف الطرف الآخر — مثال: <b dir="ltr">823674190</b></p>
     <input id="mcInput" maxlength="9" inputmode="numeric" placeholder="123456789" autocomplete="off" spellcheck="false">
     <div class="merr" id="mcErr" hidden></div>
-    <button class="mbtn" id="mcGo">اتصال</button>
+    <button class="mbtn" id="mcGo">بدء المحادثة</button>
+  </div>
+</div>
+
+<div class="overlay" id="mDelete" hidden>
+  <div class="modal">
+    <button class="ibtn mx" id="mdClose"><svg class="ic"><use href="#i-x"/></svg></button>
+    <h3>حذف المحادثة</h3>
+    <p>سيُحذف سجل محادثة «<span id="mdName"></span>» من جهازك نهائياً.</p>
+    <div class="dbtns">
+      <button class="mbtn btn-red" id="mdYes">حذف</button>
+      <button class="mbtn" id="mdNo" style="background:#E5E7EB;color:var(--ink)">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -402,12 +417,19 @@ const db = {
 
 /* ================= الحالة ================= */
 let me = null, chats = {}, activePid = null;
-let peer = null, conns = new Map(), connecting = new Set();
-let connectTimers = new Map(), retryTimers = new Map(), wantConnect = new Set();
-let peerAttempt = 0, peerTimer = null, waitingModal = null, unavail = 0;
+let client = null, brokerUp = false, mqttRetry = null;
 let imgBufs = new Map(), lastDay = null, typingRow = null;
 let typUntil = 0, typHideT = 0, lastTypeSent = 0;
-const CHUNK = 60*1024;
+
+/* مواضيع MQTT: صندوق وارد + إشعارات قراءة + حضور + يكتب الآن
+   الرسائل تُنشر بحالة Retained: يخزنها الوسيط حتى لو كان المستقبل مغلق
+   ويُسلّمها فور اشتراكه — ثم يُمسح الموضوع من الوسيط بعد الاستلام */
+const T = {
+  inbox:  id => 'mirsal/in/'  + id,          // + /{uid}
+  ack:    id => 'mirsal/ack/' + id,          // + /{uid}
+  pres:   id => 'mirsal/pres/'  + id,
+  typ:    id => 'mirsal/typing/' + id
+};
 
 const msgsEl = $('msgs');
 function makeTyping(){
@@ -418,23 +440,16 @@ function makeTyping(){
 
 const saveChat = pid => { if (chats[pid]) db.set('chat:'+pid, chats[pid]); };
 function ensureChat(pid){
-  if (!chats[pid]) chats[pid] = { pid, name:null, avatar:null, unread:0, created:Date.now(), last:0, messages:[] };
+  if (!chats[pid]) chats[pid] = { pid, name:null, avatar:null, unread:0, created:Date.now(), last:0, messages:[], pres:null };
+  if (client && client.connected){ try { client.subscribe(T.pres(pid), {qos:0}); } catch {} }
   return chats[pid];
 }
 const chatTitle = c => c.name || ('مراسل ' + c.pid.slice(-3));
-const hasPendingWork = pid => {
-  const c = chats[pid];
-  return !!(c && c.messages.some(m => m.out && m.status === 'pending'));
-};
 
 /* ================= الصور الرمزية ================= */
 function paintAvatar(el, name, av, id){
-  if (av){
-    el.innerHTML = '<img alt="" src="' + esc(av) + '">';
-  } else {
-    el.textContent = initial(name);
-    el.style.background = avColor(id || name || 'x');
-  }
+  if (av) el.innerHTML = '<img alt="" src="' + esc(av) + '">';
+  else { el.textContent = initial(name); el.style.background = avColor(id || name || 'x'); }
 }
 
 /* ================= تنبيهات وصوت ================= */
@@ -512,7 +527,6 @@ function appendMsgDom(m){
     div.innerHTML = `<div class="bubble"><div class="btext"></div>${meta}</div>`;
     div.querySelector('.btext').textContent = m.text;
   }
-  // إدراج آمن: قبل صف "يكتب…" إن كان مُلحقاً، وإلا في النهاية
   if (typingRow && typingRow.parentNode === msgsEl) msgsEl.insertBefore(div, typingRow);
   else msgsEl.appendChild(div);
 }
@@ -520,8 +534,8 @@ function renderMsgs(c){
   msgsEl.innerHTML = ''; lastDay = null;
   makeTyping();
   if (!c.messages.length)
-    msgsEl.insertAdjacentHTML('beforeend','<div class="no-msgs">لا رسائل بعد — اكتب أول رسالة.</div>');
-  msgsEl.appendChild(typingRow); // يُلحق أولاً حتى يصح الإدراج قبله
+    msgsEl.insertAdjacentHTML('beforeend','<div class="no-msgs">لا رسائل بعد — اكتب أول رسالة وستُسلَّم حتى لو كان الطرف الآخر غير متصل.</div>');
+  msgsEl.appendChild(typingRow);
   try { c.messages.forEach(appendMsgDom); } catch {}
   msgsEl.scrollTop = msgsEl.scrollHeight;
 }
@@ -534,7 +548,7 @@ function updateTitle(){
 function renderChatList(){
   const list = $('chatList'); list.innerHTML = '';
   const arr = Object.values(chats).sort((a,b)=>(b.last||b.created)-(a.last||a.created));
-  if (!arr.length){ list.innerHTML = '<div class="list-empty">لا محادثات بعد</div>'; updateTitle(); return; }
+  if (!arr.length){ list.innerHTML = '<div class="list-empty">لا محادثات</div>'; updateTitle(); return; }
   arr.forEach(c => {
     const last = c.messages[c.messages.length-1];
     const typing = (c.pid === activePid) && typUntil > Date.now();
@@ -566,13 +580,12 @@ function renderHeader(){
   $('cName').textContent = chatTitle(c);
   const dot = $('cDot'), st = $('cStatText');
   st.className = '';
-  if (typUntil > Date.now()){ dot.className = 'dot wait'; st.textContent = 'يكتب الآن…'; st.className = 'typing'; }
-  else {
-    const conn = conns.get(c.pid);
-    if (conn && conn.open){ dot.className = 'dot on'; st.textContent = 'متصل الآن'; }
-    else if (connecting.has(c.pid) || !peer || !peer.open){ dot.className = 'dot wait'; st.textContent = 'جارٍ الاتصال…'; }
-    else { dot.className = 'dot off'; st.textContent = 'غير متصل — تُرسل الرسائل عند توفره'; }
-  }
+  if (typUntil > Date.now()){ dot.className = 'dot wait'; st.textContent = 'يكتب الآن…'; st.className = 'typing'; return; }
+  if (!brokerUp){ dot.className = 'dot wait'; st.textContent = 'جارٍ الاتصال…'; return; }
+  const p = c.pres;
+  if (p && p.on && Date.now() - (p.ts||0) < 60000){ dot.className = 'dot on'; st.textContent = 'متصل الآن'; return; }
+  if (p && p.ts){ dot.className = 'dot off'; st.textContent = 'آخر ظهور ' + timeFmt(p.ts); return; }
+  dot.className = 'dot off'; st.textContent = 'غير متصل — ستُسلَّم رسائلك عند تواجده';
 }
 function openChat(pid){
   const c = chats[pid];
@@ -580,7 +593,7 @@ function openChat(pid){
   activePid = pid; typUntil = 0;
   if (typingRow) typingRow.hidden = true;
   c.unread = 0; saveChat(pid);
-  $('conv').hidden = false;                    // تُعرض أولاً — الدخول لا يفشل أبداً
+  $('conv').hidden = false;
   document.body.classList.add('in-chat');
   try { renderHeader(); renderMsgs(c); } catch {}
   renderChatList();
@@ -588,273 +601,158 @@ function openChat(pid){
   setTimeout(()=> $('ta').focus(), 60);
 }
 function sendSeenAll(pid){
-  const c = chats[pid]; if (!c) return;
-  const uids = c.messages.filter(m=>!m.out).map(m=>m.uid).slice(-80);
-  if (uids.length) sendAck(pid, { k:'seen', uids });
-}
-function sendAck(pid, payload){
-  const c = conns.get(pid);
-  if (c && c.open){ try { c.send(payload); } catch {} }
+  const c = chats[pid]; if (!c || !client || !client.connected) return;
+  c.messages.forEach(m => { if (!m.out && m.status !== 'seen') sendAckOne(m.uid, pid, 's'); });
 }
 
-/* ================= الاتصال (PeerJS) — المعرّف ثابت لا يتغيّر ================= */
+/* ================= طبقة MQTT — تسليم دائم بلا شرط اتصال الطرفين ================= */
 function setNet(s){
   const m = { online:'متصل', connecting:'جارٍ الاتصال…', offline:'غير متصل' };
   $('netDot').className = 'dot ' + (s==='online'?'on':s==='connecting'?'wait':'off');
   $('netText').textContent = m[s];
 }
-function startPeer(){
-  clearTimeout(peerTimer);
-  if (peer){ try { peer.destroy(); } catch {} peer = null; }
-  conns.forEach(c => { try { c.close(); } catch {} }); conns.clear();
-  connecting.clear();
-  connectTimers.forEach(t => clearTimeout(t)); connectTimers.clear();
-  retryTimers.forEach(t => clearTimeout(t)); retryTimers.clear();
-  if (typeof Peer === 'undefined'){ setNet('offline'); schedulePeer(); return; }
+function publishPresence(){
+  if (!client || !client.connected) return;
+  try {
+    client.publish(T.pres(me.id), JSON.stringify({ on:true, n:me.name, a:me.avatar||null, ts:Date.now() }), { retain:true, qos:0 });
+  } catch {}
+}
+function startMqtt(){
+  clearTimeout(mqttRetry);
+  if (typeof mqtt === 'undefined'){ setNet('offline'); mqttRetry = setTimeout(startMqtt, 4000); return; }
+  if (client){ try { client.end(true); } catch {} client = null; }
   setNet('connecting');
-  if (unavail >= 3) $('netText').textContent = 'أغلق النوافذ الأخرى لنفس الحساب…';
-  try { peer = new Peer(me.id, { debug:0 }); } catch { schedulePeer(); return; }
-  peer.on('open', () => {
-    unavail = 0; peerAttempt = 0; setNet('online');
-    const w = [...wantConnect]; wantConnect.clear();
-    w.forEach(tryConnect);
-    Object.values(chats).forEach(c => { if (hasPendingWork(c.pid)) tryConnect(c.pid); });
-  });
-  peer.on('connection', attachConn);
-  peer.on('disconnected', () => {
-    setNet('connecting');
-    const re = () => { try { peer && peer.reconnect(); } catch {} };
-    re();
-    setTimeout(()=>{ if (peer && !peer.open){ if (conns.size === 0) startPeer(); else re(); } }, 4000);
-  });
-  peer.on('error', err => {
-    const t = err && err.type;
-    if (t === 'unavailable-id'){
-      // لا نغيّر المعرّف أبداً — الجلسة القديمة تتحرر بعد لحظات، نعيد بنفس المعرّف
-      unavail++;
-      try { peer.destroy(); } catch {}
-      peer = null;
-      setNet('connecting');
-      if (unavail >= 3) $('netText').textContent = 'أغلق النوافذ الأخرى لنفس الحساب…';
-      clearTimeout(peerTimer);
-      peerTimer = setTimeout(startPeer, 2500);
-      return;
-    }
-    if (t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed'){ schedulePeer(); return; }
-    if (t === 'browser-incompatible'){ setNet('offline'); return; }
-    if (t === 'peer-unavailable'){
-      const m = (err.message||'').match(/\d{9}/);
-      failConn(m ? m[0] : null, 'لا يوجد مراسل بهذا المعرّف الآن.');
-    }
-  });
+  try {
+    client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+      clientId: 'mirsal_' + me.id + '_' + Math.random().toString(16).slice(2,8),
+      keepalive: 30, clean: true, reconnectPeriod: 2500, connectTimeout: 10000,
+      will: { topic: T.pres(me.id), payload: JSON.stringify({ on:false, ts:Date.now() }), retain: true, qos: 0 }
+    });
+  } catch { setNet('offline'); mqttRetry = setTimeout(startMqtt, 4000); return; }
+  client.on('connect', onBrokerUp);
+  client.on('reconnect', () => { brokerUp = false; setNet('connecting'); });
+  client.on('close', () => { brokerUp = false; if (activePid) renderHeader(); });
+  client.on('error', () => {});
+  client.on('message', onMqttMsg);
 }
-function schedulePeer(){
-  setNet('connecting');
-  const d = Math.min(1500 * Math.pow(2, peerAttempt++), 12000);
-  clearTimeout(peerTimer);
-  peerTimer = setTimeout(startPeer, d);
+function onBrokerUp(){
+  brokerUp = true; setNet('online');
+  try {
+    client.subscribe(T.inbox(me.id) + '/#', { qos:1 });
+    client.subscribe(T.ack(me.id) + '/#',  { qos:1 });
+    client.subscribe(T.typ(me.id),         { qos:0 });
+    Object.keys(chats).forEach(pid => { try { client.subscribe(T.pres(pid), {qos:0}); } catch {} });
+  } catch {}
+  publishPresence();
+  // إعادة إرسال أي رسائل لم تُسلَّم + تحديث الحضور دورياً
+  deliverAllPending();
+  if (activePid) renderHeader();
 }
-function setConnTimer(pid, fn, ms){
-  const old = connectTimers.get(pid); if (old) clearTimeout(old);
-  connectTimers.set(pid, setTimeout(()=>{ connectTimers.delete(pid); fn(); }, ms));
-}
-function tryConnect(pid){
-  if (!pid || pid === me.id) return;
-  const ex = conns.get(pid); if (ex && ex.open) return;
-  if (connecting.has(pid)) return;
-  if (!peer || !peer.open){
-    wantConnect.add(pid);
-    if (waitingModal === pid) setConnTimer(pid, ()=> failConn(pid, 'تعذّر الاتصال بالشبكة — حاول مجدداً.'), 20000);
-    if (activePid === pid) renderHeader();
-    return;
-  }
-  connecting.add(pid);
-  let conn;
-  try { conn = peer.connect(pid, { reliable:true, metadata:{ from: me.id } }); }
-  catch { connecting.delete(pid); failConn(pid, 'تعذّر بدء الاتصال.'); return; }
-  attachConn(conn);
-  setConnTimer(pid, ()=>{ if (!((conns.get(pid)||{}).open)) failConn(pid, 'لم يستجب الطرف الآخر — تأكد من صحة المعرّف ومن أن الطرف الآخر مفتوح على التطبيق.'); }, 14000);
-  if (activePid === pid) renderHeader();
-}
-function failConn(pid, userMsg){
-  if (pid){
-    connecting.delete(pid);
-    const t = connectTimers.get(pid); if (t){ clearTimeout(t); connectTimers.delete(pid); }
-  }
-  if (waitingModal === pid){
-    $('mcErr').textContent = userMsg || 'تعذّر الوصول إلى هذا المعرّف.';
-    $('mcErr').hidden = false;
-    $('mcGo').textContent = 'اتصال'; $('mcGo').disabled = false;
-    waitingModal = null; beepErr();
-  } else if (!pid && userMsg){ toast(userMsg, 'err'); }
-  if (activePid === pid) renderHeader();
-  if (pid && hasPendingWork(pid) && !retryTimers.has(pid))
-    retryTimers.set(pid, setTimeout(()=>{ retryTimers.delete(pid); tryConnect(pid); }, 15000));
-}
-function attachConn(conn){
-  const pid = conn.peer;
-  conn.on('open', () => {
-    conn._init = (conn.metadata && conn.metadata.from) ? String(conn.metadata.from) : me.id;
-    const cur = conns.get(pid);
-    if (cur && cur !== conn && cur.open){
-      if (conn._init < cur._init){ try { cur.close(); } catch {} conns.set(pid, conn); bootConn(pid, conn); }
-      else { try { conn.close(); } catch {} }
-    } else {
-      if (cur && cur !== conn){ try { cur.close(); } catch {} }
-      conns.set(pid, conn); bootConn(pid, conn);
-    }
-  });
-  conn.on('data', d => { if (conns.get(pid) === conn) onData(pid, d); });
-  conn.on('close', () => { if (conns.get(pid) === conn){ conns.delete(pid); onConnClose(pid); } });
-  conn.on('error', () => {});
-}
-function bootConn(pid, conn){
-  try { conn.send({ t:'hello', name: me.name, avatar: me.avatar || '' }); } catch {}
-  onConnOpen(pid);
-}
-function onConnOpen(pid){
-  connecting.delete(pid);
-  const t = connectTimers.get(pid); if (t){ clearTimeout(t); connectTimers.delete(pid); }
-  const r = retryTimers.get(pid); if (r){ clearTimeout(r); retryTimers.delete(pid); }
-  setNet('online');
-  const isNew = !chats[pid];
-  ensureChat(pid);
-  deliverPending(pid);
-  saveChat(pid); renderChatList();
-  if (waitingModal === pid){
-    waitingModal = null; closeConnectModal();
-    openChat(pid);
-    toast('تم الاتصال بـ ' + chatTitle(chats[pid]));
-  } else if (isNew && !activePid){
-    openChat(pid);
-    toast('محادثة جديدة مع ' + (chats[pid].name || 'مراسل'));
-  }
-  if (activePid === pid){ renderHeader(); sendSeenAll(pid); }
-}
-function onConnClose(pid){
-  if (activePid === pid) renderHeader();
-  for (const [k, b] of imgBufs) if (b.pid === pid) imgBufs.delete(k);
-  if (hasPendingWork(pid) && !retryTimers.has(pid))
-    retryTimers.set(pid, setTimeout(()=>{ retryTimers.delete(pid); tryConnect(pid); }, 3000));
-}
-function deliverPending(pid){
-  const c = chats[pid]; if (!c) return;
+function deliverAllPending(){
   let any = false;
-  c.messages.forEach(m => { if (m.out && m.status === 'pending' && sendMsgNow(pid, m)) any = true; });
+  Object.values(chats).forEach(c => {
+    c.messages.forEach(m => { if (m.out && m.status === 'pending' && sendOutbound(c.pid, m)) any = true; });
+  });
   if (any) renderChatList();
 }
+setInterval(() => { if (brokerUp) publishPresence(); }, 25000);
 
-/* ================= استقبال البيانات ================= */
-function onData(pid, d){
-  if (!d || typeof d !== 'object') return;
-  switch (d.t) {
-    case 'hello': {
-      const existed = !!chats[pid];
-      const c = ensureChat(pid);
-      const nm = String(d.name||'').trim().slice(0,24);
-      if (nm) c.name = nm;
-      c.avatar = d.avatar ? String(d.avatar).slice(0,300000) : null;
-      saveChat(pid); renderChatList();
-      if (activePid === pid) renderHeader();
-      if (!existed){ toast(nm ? 'بدأ ' + nm + ' محادثة معك' : 'أحدهم بدأ محادثة معك'); beepIn(); }
-      break;
-    }
-    case 'msg': {
-      const c = ensureChat(pid);
-      const mu = String(d.uid || uid());
-      if (c.messages.some(x => x.uid === mu)){ sendAck(pid, { k:'delivered', uid: mu }); break; }
-      const m = { uid: mu, kind:'text', text:String(d.text||'').slice(0,2000), time:+d.time||Date.now(), out:false, status:'seen' };
-      addIncoming(c, m, pid);
-      break;
-    }
-    case 'img-meta': {
-      const size = +d.size || 0;
-      if (size > 0 && size <= 8*1024*1024)
-        imgBufs.set(String(d.uid), { pid, size, meta:{ uid:String(d.uid), w:+d.w||0, h:+d.h||0, time:+d.time||Date.now() }, parts:new Array(Math.ceil(size/CHUNK)) });
-      break;
-    }
-    case 'img-chunk': {
-      const b = imgBufs.get(String(d.uid)); if (!b) break;
-      let u8 = d.data;
-      if (u8 instanceof ArrayBuffer) u8 = new Uint8Array(u8);
-      else if (u8.buffer) u8 = new Uint8Array(u8.buffer, u8.byteOffset||0, u8.byteLength);
-      b.parts[+d.i] = u8;
-      break;
-    }
-    case 'img-end': {
-      const b = imgBufs.get(String(d.uid)); if (!b) break;
-      imgBufs.delete(String(d.uid));
-      const c = ensureChat(pid);
-      if (c.messages.some(x => x.uid === b.meta.uid)){ sendAck(pid, { k:'delivered', uid:b.meta.uid }); break; }
-      const full = new Uint8Array(b.size); let off = 0, ok = true;
-      for (let i = 0; i < b.parts.length; i++){ const p = b.parts[i]; if (!p){ ok = false; break; } full.set(p, off); off += p.byteLength; }
-      if (!ok) break;
-      const fr = new FileReader();
-      fr.onload = () => {
-        const m = { uid:b.meta.uid, kind:'img', text:'', data:fr.result, w:b.meta.w, h:b.meta.h, time:b.meta.time, out:false, status:'seen' };
-        addIncoming(c, m, pid);
-      };
-      fr.readAsDataURL(new Blob([full], { type:'image/jpeg' }));
-      break;
-    }
-    case 'ack': {
-      const k = d.k === 'seen' ? 'seen' : 'delivered';
-      const uids = (d.uids && d.uids.length ? d.uids : [d.uid]).map(String);
-      let changed = false;
-      uids.forEach(u => {
-        for (const c of Object.values(chats)){
-          const m = c.messages.find(x => x.uid === u && x.out);
-          if (m && m.status !== 'seen'){ m.status = k; updateMsgDom(u, k); saveChat(c.pid); changed = true; break; }
-        }
-      });
-      if (changed) renderChatList();
-      break;
-    }
-    case 'typing': {
-      if (activePid !== pid) break;
+/* إرسال رسالة إلى صندوق وارد الطرف الآخر (مخزّنة retained حتى يصل) */
+function sendOutbound(pid, m){
+  if (!client || !client.connected) return false;
+  const topic = T.inbox(pid) + '/' + m.uid;
+  const payload = m.kind === 'text'
+    ? { t:'m', f:me.id, u:m.uid, k:'t', x:m.text, tm:m.time }
+    : { t:'m', f:me.id, u:m.uid, k:'i', x:m.data, w:m.w, h:m.h, tm:m.time };
+  try { client.publish(topic, JSON.stringify(payload), { qos:1, retain:true }); }
+  catch { return false; }
+  m.status = 'sent'; updateMsgDom(m.uid, 'sent'); saveChat(pid); beepOut(); return true;
+}
+/* إشعار قراءة/تسليم — يصل للمرسل حتى لو كان غير متصل لحظتها */
+function sendAckOne(u, toPid, k){
+  if (!client || !client.connected) return;
+  try { client.publish(T.ack(toPid) + '/' + u, JSON.stringify({ k, u }), { qos:1, retain:true }); } catch {}
+}
+function clearTopic(topic){ try { client.publish(topic, '', { retain:true, qos:1 }); } catch {} }
+
+function onMqttMsg(topic, payload){
+  const s = payload.toString();
+  if (topic.startsWith(T.inbox(me.id) + '/')){
+    if (!s) return;
+    const u = topic.split('/')[3];
+    let d; try { d = JSON.parse(s); } catch { clearTopic(topic); return; }
+    clearTopic(topic); // حذف الرسالة من الوسيط — تم التسليم
+    handleInbound(d);
+  }
+  else if (topic.startsWith(T.ack(me.id) + '/')){
+    if (!s) return;
+    let d; try { d = JSON.parse(s); } catch { clearTopic(topic); return; }
+    clearTopic(topic);
+    handleAck(d);
+  }
+  else if (topic === T.typ(me.id)){
+    if (!s) return;
+    let d; try { d = JSON.parse(s); } catch { return; }
+    if (d.f && activePid === d.f){
       typUntil = Date.now() + 2600;
       renderHeader();
       if (typingRow) typingRow.hidden = false;
       scrollBottom();
       clearTimeout(typHideT);
       typHideT = setTimeout(()=>{ if (typingRow) typingRow.hidden = true; typUntil = 0; renderHeader(); }, 2600);
-      break;
     }
   }
+  else if (topic.startsWith('mirsal/pres/')){
+    const pid = topic.split('/')[2];
+    if (!s) return;
+    let d; try { d = JSON.parse(s); } catch { return; }
+    const c = chats[pid]; if (!c) return;
+    c.pres = { on: !!d.on, ts: +d.ts || 0 };
+    if (d.n) c.name = String(d.n).slice(0,24);
+    if (d.a !== undefined) c.avatar = d.a || null;
+    saveChat(pid); renderChatList();
+    if (activePid === pid) renderHeader();
+  }
 }
-function addIncoming(c, m, pid){
-  c.messages.push(m); c.last = m.time;
+function handleInbound(d){
+  if (!d || d.f === me.id) return;
+  const pid = String(d.f);
+  if (!/^\d{9}$/.test(pid)) return;
+  const c = ensureChat(pid);
+  const mu = String(d.u || uid());
+  if (c.messages.some(x => x.uid === mu)) return;
+  const m = d.k === 'i'
+    ? { uid:mu, kind:'img', text:'', data:String(d.x||''), w:+d.w||0, h:+d.h||0, time:+d.tm||Date.now(), out:false, status:'delivered' }
+    : { uid:mu, kind:'text', text:String(d.x||'').slice(0,2000), time:+d.tm||Date.now(), out:false, status:'delivered' };
+  c.messages.push(m);
+  c.messages.sort((a,b)=>a.time-b.time);
+  c.last = m.time;
   if (c.messages.length > 300) c.messages.splice(0, c.messages.length - 300);
   const active = activePid === pid && !document.hidden;
   if (!active) c.unread++;
   saveChat(pid); renderChatList();
   if (activePid === pid){
     const nm = msgsEl.querySelector('.no-msgs'); if (nm) nm.remove();
-    appendMsgDom(m); scrollBottom();
+    appendMsgDom(m); scrollBottom(); renderHeader();
   }
   beepIn();
   if (!active) toast(chatTitle(c) + ': ' + (m.kind === 'img' ? 'صورة' : m.text.slice(0,60)));
-  sendAck(pid, active ? { k:'seen', uids:[m.uid] } : { k:'delivered', uid:m.uid });
+  sendAckOne(mu, pid, active ? 's' : 'd');
+}
+function handleAck(d){
+  if (!d || !d.u) return;
+  const k = d.k === 's' ? 'seen' : 'delivered';
+  let changed = false;
+  for (const c of Object.values(chats)){
+    const m = c.messages.find(x => x.uid === d.u && x.out);
+    if (m && m.status !== 'seen'){
+      m.status = k; updateMsgDom(d.u, k); saveChat(c.pid); changed = true; break;
+    }
+  }
+  if (changed) renderChatList();
 }
 
 /* ================= الإرسال ================= */
-function sendMsgNow(pid, m){
-  const conn = conns.get(pid);
-  if (!conn || !conn.open) return false;
-  try {
-    if (m.kind === 'text'){
-      conn.send({ t:'msg', uid:m.uid, text:m.text, time:m.time });
-    } else {
-      conn.send({ t:'img-meta', uid:m.uid, w:m.w, h:m.h, size:m.size, time:m.time });
-      const bytes = dataURLToBytes(m.data);
-      for (let i = 0; i * CHUNK < bytes.length; i++)
-        conn.send({ t:'img-chunk', uid:m.uid, i, data: bytes.slice(i*CHUNK, (i+1)*CHUNK).buffer });
-      conn.send({ t:'img-end', uid:m.uid });
-    }
-  } catch { return false; }
-  m.status = 'sent'; updateMsgDom(m.uid, 'sent'); saveChat(pid); beepOut(); renderChatList();
-  return true;
-}
 function sendText(){
   const text = $('ta').value.trim();
   if (!text || !activePid) return;
@@ -866,9 +764,7 @@ function sendText(){
   $('ta').value = ''; taResize();
   const nm = msgsEl.querySelector('.no-msgs'); if (nm) nm.remove();
   appendMsgDom(m); scrollBottom(); renderChatList();
-  const conn = conns.get(activePid);
-  if (conn && conn.open) sendMsgNow(activePid, m);
-  else tryConnect(activePid);
+  if (!sendOutbound(activePid, m) && client) { /* تبقى «معلّقة» وتُرسل تلقائياً عند عودة الاتصال */ }
 }
 
 /* ================= الصور ================= */
@@ -878,20 +774,24 @@ function dataURLToBytes(u){
   for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
   return a;
 }
+function drawScaled(img, max, q){
+  let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  if (w > max || h > max){ const r = Math.min(max/w, max/h); w = Math.round(w*r); h = Math.round(h*r); }
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  cv.getContext('2d').drawImage(img, 0, 0, w, h);
+  return { data: cv.toDataURL('image/jpeg', q), w, h };
+}
 function compressImage(file){
   return new Promise((res, rej) => {
     const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => {
+      URL.revokeObjectURL(url);
       try {
-        const MAX = 1280;
-        let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-        if (!w || !h) throw 0;
-        if (w > MAX || h > MAX){ const r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r); }
-        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-        cv.getContext('2d').drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-        res({ data: cv.toDataURL('image/jpeg', 0.75), w, h });
-      } catch { URL.revokeObjectURL(url); rej(); }
+        let r = drawScaled(img, 1280, .75);
+        if (r.data.length > 850000) r = drawScaled(img, 1000, .6);  // حد الوسيط ~1MB
+        if (r.data.length > 850000) r = drawScaled(img, 800, .5);
+        res(r);
+      } catch { rej(); }
     };
     img.onerror = () => { URL.revokeObjectURL(url); rej(); };
     img.src = url;
@@ -901,15 +801,15 @@ function compressAvatar(file){
   return new Promise((res, rej) => {
     const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => {
+      URL.revokeObjectURL(url);
       try {
         const side = Math.min(img.naturalWidth, img.naturalHeight);
         if (!side) throw 0;
         const S = 256;
         const cv = document.createElement('canvas'); cv.width = S; cv.height = S;
         cv.getContext('2d').drawImage(img, (img.naturalWidth-side)/2, (img.naturalHeight-side)/2, side, side, 0, 0, S, S);
-        URL.revokeObjectURL(url);
         res(cv.toDataURL('image/jpeg', 0.82));
-      } catch { URL.revokeObjectURL(url); rej(); }
+      } catch { rej(); }
     };
     img.onerror = () => { URL.revokeObjectURL(url); rej(); };
     img.src = url;
@@ -923,17 +823,14 @@ function compressAvatar(file){
   if (!activePid){ toast('افتح محادثة أولاً', 'err'); return; }
   if (!f.type.startsWith('image/')){ toast('يمكن إرسال الصور فقط', 'err'); return; }
   let c; try { c = await compressImage(f); } catch { toast('تعذّر قراءة الصورة', 'err'); return; }
-  const bytes = dataURLToBytes(c.data);
   const chat = chats[activePid];
-  const m = { uid:uid(), kind:'img', text:'', data:c.data, w:c.w, h:c.h, size:bytes.length, time:Date.now(), out:true, status:'pending' };
+  const m = { uid:uid(), kind:'img', text:'', data:c.data, w:c.w, h:c.h, time:Date.now(), out:true, status:'pending' };
   chat.messages.push(m); chat.last = m.time;
   if (chat.messages.length > 300) chat.messages.splice(0, chat.messages.length - 300);
   saveChat(activePid);
   const nm = msgsEl.querySelector('.no-msgs'); if (nm) nm.remove();
   appendMsgDom(m); scrollBottom(); renderChatList();
-  const conn = conns.get(activePid);
-  if (conn && conn.open) sendMsgNow(activePid, m);
-  else tryConnect(activePid);
+  sendOutbound(activePid, m);
 });
 function openViewer(src){ $('viewerImg').src = src; $('viewer').hidden = false; }
  $('viewer').addEventListener('click', () => { $('viewer').hidden = true; $('viewerImg').src = ''; });
@@ -945,31 +842,29 @@ function renderProfile(){
   $('pfId').textContent = me.id;
 }
 function broadcastProfile(){
-  conns.forEach(c => { if (c.open){ try { c.send({ t:'hello', name: me.name, avatar: me.avatar || '' }); } catch {} } });
+  publishPresence();
+  renderChatList();
+  if (activePid) renderHeader();
 }
 function applyName(v){
   v = String(v||'').trim();
   if (v.length < 2 || v === me.name) return false;
   me.name = v.slice(0,24);
   db.set('me', me);
-  broadcastProfile();
-  renderProfile(); renderChatList();
-  if (activePid) renderHeader();
+  broadcastProfile(); renderProfile();
   return true;
 }
 function applyAvatar(av){
   me.avatar = av || null;
   db.set('me', me);
-  broadcastProfile();
-  renderProfile(); renderChatList();
-  if (activePid) renderHeader();
+  broadcastProfile(); renderProfile();
 }
 
 /* ================= الدخول ================= */
 function enterApp(){
   $('welcome').hidden = true; $('app').hidden = false;
   renderProfile(); renderChatList(); setNet('connecting');
-  startPeer();
+  startMqtt();
 }
  $('wForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -981,7 +876,7 @@ function enterApp(){
     return;
   }
   $('wErr').hidden = true;
-  me = { name: v.slice(0,24), id: genId(), avatar: null }; // المعرّف يُولَّد مع الحساب مرة واحدة
+  me = { name: v.slice(0,24), id: genId(), avatar: null };
   enterApp();
   db.set('me', me);
 });
@@ -992,12 +887,15 @@ function enterApp(){
       const numeric = /^\d{9}$/.test(String(saved.id||''));
       me = {
         name: String(saved.name),
-        id: numeric ? String(saved.id) : genId(), // ترحيل لمرة واحدة فقط للصيغة الرقمية
+        id: numeric ? String(saved.id) : genId(),
         avatar: typeof saved.avatar === 'string' ? saved.avatar : null
       };
       const all = await db.all();
       for (const k in all) if (k.startsWith('chat:')) chats[k.slice(5)] = all[k];
-      Object.values(chats).forEach(c => c.messages.forEach(m => { if (m.out && m.status !== 'seen') m.status = 'pending'; }));
+      Object.values(chats).forEach(c => {
+        c.messages.forEach(m => { if (m.out && m.status !== 'seen') m.status = 'pending'; });
+        if (!c.pres) c.pres = null;
+      });
       if (!numeric) db.set('me', me);
       enterApp();
     }
@@ -1009,16 +907,35 @@ const ta = $('ta');
 function taResize(){ ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; }
 ta.addEventListener('input', () => {
   taResize();
-  const c = activePid && conns.get(activePid);
-  if (c && c.open && Date.now() - lastTypeSent > 1500){ try { c.send({ t:'typing' }); lastTypeSent = Date.now(); } catch {} }
+  if (client && client.connected && activePid && Date.now() - lastTypeSent > 1500){
+    try { client.publish(T.typ(activePid), JSON.stringify({ f: me.id }), { qos:0 }); lastTypeSent = Date.now(); } catch {}
+  }
 });
 ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
  $('sendBtn').addEventListener('click', sendText);
 
-/* قائمة المحادثات: تفويض أحداث — النقر يعمل دائماً حتى بعد إعادة الرسم */
+/* قائمة المحادثات: نقرة = فتح، ضغط مطوّل أو زر أيمن = حذف */
+let lpTimer = null, suppressClick = false;
  $('chatList').addEventListener('click', e => {
+  if (suppressClick){ suppressClick = false; return; }
   const item = e.target.closest('.chat-item');
   if (item && item.dataset.pid) openChat(item.dataset.pid);
+});
+ $('chatList').addEventListener('pointerdown', e => {
+  const item = e.target.closest('.chat-item');
+  if (!item || !item.dataset.pid) return;
+  const pid = item.dataset.pid;
+  lpTimer = setTimeout(() => { lpTimer = null; suppressClick = true; openDeleteModal(pid); }, 550);
+});
+['pointerup','pointerleave','pointercancel','pointermove'].forEach(ev =>
+  $('chatList').addEventListener(ev, () => { if (lpTimer){ clearTimeout(lpTimer); lpTimer = null; } })
+);
+ $('chatList').addEventListener('contextmenu', e => {
+  const item = e.target.closest('.chat-item');
+  if (!item || !item.dataset.pid) return;
+  e.preventDefault();
+  suppressClick = true; setTimeout(()=> suppressClick = false, 100);
+  openDeleteModal(item.dataset.pid);
 });
 
  $('newChatBtn').addEventListener('click', openConnectModal);
@@ -1031,19 +948,52 @@ ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.p
   if (!pid){ $('mcErr').textContent = 'أدخل معرّفاً صحيحاً من 9 أرقام.'; $('mcErr').hidden = false; return; }
   if (pid === me.id){ $('mcErr').textContent = 'هذا معرّفك أنت — شاركه مع الطرف الآخر ليكتب إليك.'; $('mcErr').hidden = false; return; }
   $('mcErr').hidden = true;
-  $('mcGo').textContent = 'جارٍ الاتصال…'; $('mcGo').disabled = true;
-  waitingModal = pid;
-  const c = conns.get(pid);
-  if (c && c.open) onConnOpen(pid); else tryConnect(pid);
+  // تُنشأ المحادثة فوراً حتى لو كان الطرف الآخر غير متصل — رسائلك تنتظره على الوسيط
+  const c = ensureChat(pid);
+  closeConnectModal();
+  openChat(pid);
+  toast('أُنشئت المحادثة — ستصل رسائلك إليه فور تواجده');
 });
 function openConnectModal(){
   $('mConnect').hidden = false;
   $('mcInput').value = ''; $('mcErr').hidden = true;
-  $('mcGo').textContent = 'اتصال'; $('mcGo').disabled = false;
-  waitingModal = null;
   setTimeout(()=> $('mcInput').focus(), 60);
 }
-function closeConnectModal(){ $('mConnect').hidden = true; waitingModal = null; }
+function closeConnectModal(){ $('mConnect').hidden = true; }
+
+/* حذف المحادثة */
+let deleteTarget = null;
+function openDeleteModal(pid){
+  const c = chats[pid]; if (!c) return;
+  deleteTarget = pid;
+  $('mdName').textContent = chatTitle(c);
+  $('mDelete').hidden = false;
+}
+function closeDeleteModal(){ $('mDelete').hidden = true; deleteTarget = null; }
+ $('mdClose').addEventListener('click', closeDeleteModal);
+ $('mdNo').addEventListener('click', closeDeleteModal);
+ $('mDelete').addEventListener('click', e => { if (e.target === $('mDelete')) closeDeleteModal(); });
+ $('mdYes').addEventListener('click', () => {
+  const pid = deleteTarget;
+  if (!pid) return;
+  const c = chats[pid];
+  if (c){
+    // مسح الرسائل المستلمة من الوسيط كي لا تُعاد
+    c.messages.forEach(m => { if (!m.out) clearTopic(T.inbox(me.id) + '/' + m.uid); });
+    try { client && client.connected && client.unsubscribe(T.pres(pid)); } catch {}
+  }
+  if (activePid === pid){
+    activePid = null; typUntil = 0;
+    if (typingRow) typingRow.hidden = true;
+    $('conv').hidden = true;
+    document.body.classList.remove('in-chat');
+  }
+  db.del('chat:'+pid);
+  delete chats[pid];
+  renderChatList();
+  closeDeleteModal();
+  toast('حُذفت المحادثة');
+});
 
  $('backBtn').addEventListener('click', () => {
   activePid = null; typUntil = 0;
@@ -1060,7 +1010,7 @@ function closeConnectModal(){ $('mConnect').hidden = true; waitingModal = null; 
 });
  $('logoutBtn').addEventListener('click', async () => {
   if (!confirm('تسجيل الخروج ومسح جميع البيانات من هذا المتصفح؟')) return;
-  try { peer && peer.destroy(); } catch {}
+  try { client && client.end(true); } catch {}
   try {
     const all = await db.all();
     for (const k in all) await db.del(k);
@@ -1127,9 +1077,9 @@ document.addEventListener('visibilitychange', () => {
     sendSeenAll(activePid);
   }
 });
-/* تحرير المعرّف على سيرفر الإشارة فور إغلاق الصفحة — يمنع تعارض إعادة الدخول */
-window.addEventListener('beforeunload', () => { try { peer && peer.destroy(); } catch {} });
-window.addEventListener('pagehide', () => { try { peer && peer.destroy(); } catch {} });
+window.addEventListener('beforeunload', () => {
+  try { client && client.publish(T.pres(me.id), JSON.stringify({ on:false, ts:Date.now() }), { retain:true, qos:0 }); } catch {}
+});
 </script>
 </body>
 </html>
