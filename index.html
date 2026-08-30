@@ -39,12 +39,14 @@ input,textarea{font-family:inherit}
 /* التطبيق */
 #app{height:100dvh;display:flex}
 #side{width:340px;background:var(--panel);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;flex:none}
-.shead{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--line)}
+.shead{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;padding-inline-end:60px;border-bottom:1px solid var(--line)}
 .sbrand{font-weight:700;font-size:18px;color:var(--acc)}
 .net{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut)}
 .pf{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
-.avatar{width:40px;height:40px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;flex:none;user-select:none}
+.avatar{width:40px;height:40px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;flex:none;user-select:none;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .avatar.sm{width:36px;height:36px;font-size:14px}
+.avatar.big{width:92px;height:92px;font-size:34px}
 .pf-main{flex:1;min-width:0}
 .pf-namewrap{display:flex;align-items:center;gap:4px;min-width:0}
 #pfName{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
@@ -74,11 +76,8 @@ input,textarea{font-family:inherit}
 .danger:hover{text-decoration:underline}
 
 #main{flex:1;display:flex;flex-direction:column;min-width:0}
-.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut);text-align:center;padding:24px}
-.empty h2{font-size:21px;color:var(--ink);font-weight:700}
-.empty p{max-width:330px;line-height:1.8;font-size:13.5px}
 #conv{flex:1;display:flex;flex-direction:column;min-height:0}
-.chead{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.chead{display:flex;align-items:center;gap:10px;padding:8px 14px;padding-inline-end:60px;background:var(--panel);border-bottom:1px solid var(--line)}
 .back{display:none}
 .cmeta{flex:1;min-width:0}
 .cname{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -113,8 +112,13 @@ input,textarea{font-family:inherit}
 #sendBtn{background:var(--acc);color:#fff}
 #sendBtn:active{transform:translateY(1px)}
 
+/* زر الإعدادات — الزاوية اليسرى العليا */
+#settingsBtn{position:fixed;top:12px;left:12px;z-index:26;width:40px;height:40px;border-radius:50%;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 5px rgba(0,0,0,.1);display:grid;place-items:center;color:var(--mut)}
+#settingsBtn:hover{color:var(--ink)}
+
+/* النوافذ */
 .overlay{position:fixed;inset:0;background:rgba(11,20,26,.5);display:grid;place-items:center;z-index:50;padding:20px}
-.modal{background:var(--panel);border-radius:16px;padding:22px;width:min(400px,100%);position:relative;animation:mIn .2s ease}
+.modal{background:var(--panel);border-radius:16px;padding:22px;width:min(400px,100%);position:relative;animation:mIn .2s ease;max-height:86vh;overflow-y:auto}
 @keyframes mIn{from{transform:translateY(12px);opacity:0}}
 .modal h3{font-size:19px;margin-bottom:4px}
 .modal>p{color:var(--mut);font-size:13px;line-height:1.7;margin-bottom:14px}
@@ -124,6 +128,27 @@ input,textarea{font-family:inherit}
 .mbtn{width:100%;margin-top:12px;background:var(--acc);color:#fff;border-radius:11px;padding:11px;font-weight:600;font-size:15px}
 .mbtn:disabled{opacity:.6;cursor:default}
 .merr{color:var(--err);font-size:12.5px;margin-top:9px;line-height:1.6}
+
+/* الإعدادات */
+.setrow{display:flex;align-items:center;gap:12px;width:100%;text-align:start;padding:10px;border:1px solid var(--line);border-radius:12px;background:#FAFAF8;margin-top:12px}
+.setrow:hover{background:#F0F2F5}
+.setrow-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.setrow-t{font-weight:600;font-size:14.5px}
+.setrow-s{font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:end}
+.chev{width:16px;height:16px;color:var(--mut)}
+.acc-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.acc-head h3{margin:0}
+.acc-av{position:relative;width:92px;margin:10px auto 4px;cursor:pointer}
+.acc-av .avatar{margin:0 auto;display:grid}
+.acc-cam{position:absolute;bottom:-2px;left:-2px;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;border:2px solid #fff}
+.acc-cam .ic{width:14px;height:14px}
+.acc-hint{text-align:center;font-size:11.5px;color:var(--mut);margin-bottom:8px}
+.acc-label{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px;font-weight:600}
+#accName{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;outline:none}
+#accName:focus{border-color:var(--acc)}
+.acc-id{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px dashed #C9C5BC;border-radius:10px;padding:8px 12px}
+#accId{font-weight:700;letter-spacing:2px;color:var(--acc);font-size:16px}
+
 #viewer{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60;display:grid;place-items:center;cursor:zoom-out}
 #viewer img{max-width:94vw;max-height:94vh;border-radius:6px}
 #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;width:max-content;max-width:92vw}
@@ -152,6 +177,9 @@ input,textarea{font-family:inherit}
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
 <symbol id="i-back" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
 </defs></svg>
 
 <section id="welcome">
@@ -159,12 +187,14 @@ input,textarea{font-family:inherit}
     <div class="wtitle">مِرسال</div>
     <p class="wsub">راسل أي شخص مباشرةً بمعرّفه.<br>أدخل اسمك للبدء.</p>
     <input id="wName" maxlength="24" autocomplete="off" placeholder="اسمك">
-    <button class="wbtn" type="submit" id="wGo">دخول</button>
+    <button class="wbtn" type="submit">دخول</button>
     <p class="werr" id="wErr" hidden>اكتب اسماً من حرفين على الأقل.</p>
   </form>
 </section>
 
 <div id="app" hidden>
+  <button id="settingsBtn" title="الإعدادات"><svg class="ic"><use href="#i-gear"/></svg></button>
+
   <aside id="side">
     <div class="shead">
       <span class="sbrand">مِرسال</span>
@@ -187,11 +217,6 @@ input,textarea{font-family:inherit}
   </aside>
 
   <main id="main">
-    <div id="empty" class="empty">
-      <h2>ابدأ مراسلة</h2>
-      <p>اختر محادثة من القائمة، أو أدخل معرّف الطرف الآخر لبدء محادثة جديدة.</p>
-      <button id="emptyNewBtn" class="wbtn" style="width:auto;padding:10px 24px;margin-top:0">محادثة جديدة</button>
-    </div>
     <section id="conv" hidden>
       <header class="chead">
         <button class="ibtn back" id="backBtn"><svg class="ic"><use href="#i-back"/></svg></button>
@@ -224,6 +249,44 @@ input,textarea{font-family:inherit}
   </div>
 </div>
 
+<div class="overlay" id="mSettings" hidden>
+  <div class="modal">
+    <button class="ibtn mx" id="setClose"><svg class="ic"><use href="#i-x"/></svg></button>
+
+    <div id="viewList">
+      <h3>الإعدادات</h3>
+      <button class="setrow" id="rowAccount">
+        <span class="avatar sm" id="rowAvatar">؟</span>
+        <span class="setrow-main">
+          <span class="setrow-t">حسابي</span>
+          <span class="setrow-s" id="rowSub"></span>
+        </span>
+        <svg class="ic chev"><use href="#i-chev"/></svg>
+      </button>
+    </div>
+
+    <div id="viewAccount" hidden>
+      <div class="acc-head">
+        <button class="ibtn" id="accBack"><svg class="ic"><use href="#i-back"/></svg></button>
+        <h3>حسابي</h3>
+      </div>
+      <div class="acc-av" id="accAvWrap" title="تغيير الصورة">
+        <span class="avatar big" id="accAvatar">؟</span>
+        <span class="acc-cam"><svg class="ic"><use href="#i-cam"/></svg></span>
+      </div>
+      <div class="acc-hint">اضغط على الصورة لتغييرها</div>
+      <label class="acc-label" for="accName">الاسم</label>
+      <input id="accName" maxlength="24" autocomplete="off">
+      <label class="acc-label">المعرّف</label>
+      <div class="acc-id">
+        <span id="accId" dir="ltr"></span>
+        <button class="ibtn" id="accCopy" title="نسخ المعرّف"><svg class="ic"><use href="#i-copy"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="avatarInput" accept="image/*" hidden>
+</div>
+
 <div id="viewer" hidden><img id="viewerImg" alt="صورة"></div>
 <div id="toasts"></div>
 
@@ -234,11 +297,11 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 
-/* المعرّف: 9 أرقام مثل معرّفات الألعاب */
+/* المعرّف: 9 أرقام، يُولَّد مرة واحدة مع إنشاء الحساب ولا يتغيّر أبداً */
 function genId(){
   const b = new Uint8Array(9);
   crypto.getRandomValues(b);
-  let s = String((b[0] % 9) + 1); // لا يبدأ بصفر
+  let s = String((b[0] % 9) + 1);
   for (let i = 1; i < 9; i++) s += b[i] % 10;
   return s;
 }
@@ -255,10 +318,10 @@ function dayLabel(t){
   return d.toLocaleDateString('ar',{day:'numeric',month:'long'});
 }
 const AV = ['#1F7A5C','#B25A2A','#31456A','#6E4A2F','#4A5D23','#7C3A2D'];
-const avColor = id => AV[[...id].reduce((a,c)=>a+c.charCodeAt(0),0) % AV.length];
+const avColor = id => AV[[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0) % AV.length];
 const initial = n => [...String(n).trim()][0] || '؟';
 
-/* ================= تخزين آمن: IndexedDB مع بديل localStorage ولا يعلّق أبداً ================= */
+/* ================= تخزين آمن: IndexedDB مع بديل localStorage ================= */
 const db = {
   _d: undefined,
   _open(){
@@ -266,7 +329,7 @@ const db = {
     return new Promise(res => {
       let done = false;
       const fin = v => { if (!done){ done = true; clearTimeout(to); this._d = v; res(v); } };
-      const to = setTimeout(() => fin(null), 2500); // لا انتظار للأبد
+      const to = setTimeout(() => fin(null), 2500);
       try {
         if (!window.indexedDB) return fin(null);
         const r = indexedDB.open('mirsal-db', 1);
@@ -341,7 +404,7 @@ const db = {
 let me = null, chats = {}, activePid = null;
 let peer = null, conns = new Map(), connecting = new Set();
 let connectTimers = new Map(), retryTimers = new Map(), wantConnect = new Set();
-let peerAttempt = 0, peerTimer = null, waitingModal = null, idRegens = 0;
+let peerAttempt = 0, peerTimer = null, waitingModal = null, unavail = 0;
 let imgBufs = new Map(), lastDay = null, typingRow = null;
 let typUntil = 0, typHideT = 0, lastTypeSent = 0;
 const CHUNK = 60*1024;
@@ -355,7 +418,7 @@ function makeTyping(){
 
 const saveChat = pid => { if (chats[pid]) db.set('chat:'+pid, chats[pid]); };
 function ensureChat(pid){
-  if (!chats[pid]) chats[pid] = { pid, name:null, unread:0, created:Date.now(), last:0, messages:[] };
+  if (!chats[pid]) chats[pid] = { pid, name:null, avatar:null, unread:0, created:Date.now(), last:0, messages:[] };
   return chats[pid];
 }
 const chatTitle = c => c.name || ('مراسل ' + c.pid.slice(-3));
@@ -363,6 +426,16 @@ const hasPendingWork = pid => {
   const c = chats[pid];
   return !!(c && c.messages.some(m => m.out && m.status === 'pending'));
 };
+
+/* ================= الصور الرمزية ================= */
+function paintAvatar(el, name, av, id){
+  if (av){
+    el.innerHTML = '<img alt="" src="' + esc(av) + '">';
+  } else {
+    el.textContent = initial(name);
+    el.style.background = avColor(id || name || 'x');
+  }
+}
 
 /* ================= تنبيهات وصوت ================= */
 function toast(msg, kind){
@@ -439,15 +512,17 @@ function appendMsgDom(m){
     div.innerHTML = `<div class="bubble"><div class="btext"></div>${meta}</div>`;
     div.querySelector('.btext').textContent = m.text;
   }
-  msgsEl.insertBefore(div, typingRow);
+  // إدراج آمن: قبل صف "يكتب…" إن كان مُلحقاً، وإلا في النهاية
+  if (typingRow && typingRow.parentNode === msgsEl) msgsEl.insertBefore(div, typingRow);
+  else msgsEl.appendChild(div);
 }
 function renderMsgs(c){
   msgsEl.innerHTML = ''; lastDay = null;
   makeTyping();
   if (!c.messages.length)
     msgsEl.insertAdjacentHTML('beforeend','<div class="no-msgs">لا رسائل بعد — اكتب أول رسالة.</div>');
-  c.messages.forEach(appendMsgDom);
-  msgsEl.appendChild(typingRow);
+  msgsEl.appendChild(typingRow); // يُلحق أولاً حتى يصح الإدراج قبله
+  try { c.messages.forEach(appendMsgDom); } catch {}
   msgsEl.scrollTop = msgsEl.scrollHeight;
 }
 
@@ -465,8 +540,11 @@ function renderChatList(){
     const typing = (c.pid === activePid) && typUntil > Date.now();
     const el = document.createElement('button');
     el.className = 'chat-item' + (c.pid === activePid ? ' active' : '');
+    el.dataset.pid = c.pid;
+    const avHtml = c.avatar ? `<span class="avatar"><img alt="" src="${esc(c.avatar)}"></span>`
+                            : `<span class="avatar" style="background:${avColor(c.pid)}">${esc(initial(chatTitle(c)))}</span>`;
     el.innerHTML = `
-      <span class="avatar" style="background:${avColor(c.pid)}">${esc(initial(chatTitle(c)))}</span>
+      ${avHtml}
       <span class="ci-main">
         <span class="ci-row1"><span class="ci-name">${esc(chatTitle(c))}</span><span class="ci-time">${last ? timeFmt(last.time) : ''}</span></span>
         <span class="ci-row2">${
@@ -476,7 +554,6 @@ function renderChatList(){
         }</span>
       </span>
       ${c.unread ? `<span class="badge">${c.unread > 99 ? '99+' : c.unread}</span>` : ''}`;
-    el.onclick = () => openChat(c.pid);
     list.appendChild(el);
   });
   updateTitle();
@@ -484,9 +561,8 @@ function renderChatList(){
 function renderHeader(){
   if (!activePid) return;
   const c = chats[activePid]; if (!c) return;
-  const a = $('cAvatar');
-  a.textContent = initial(chatTitle(c));
-  a.style.background = avColor(c.pid);
+  if (c.avatar) $('cAvatar').innerHTML = `<img alt="" src="${esc(c.avatar)}">`;
+  else { $('cAvatar').textContent = initial(chatTitle(c)); $('cAvatar').style.background = avColor(c.pid); }
   $('cName').textContent = chatTitle(c);
   const dot = $('cDot'), st = $('cStatText');
   st.className = '';
@@ -499,12 +575,15 @@ function renderHeader(){
   }
 }
 function openChat(pid){
-  const c = chats[pid]; if (!c) return;
+  const c = chats[pid];
+  if (!c) return;
   activePid = pid; typUntil = 0;
+  if (typingRow) typingRow.hidden = true;
   c.unread = 0; saveChat(pid);
-  $('empty').hidden = true; $('conv').hidden = false;
-  renderHeader(); renderMsgs(c); renderChatList();
+  $('conv').hidden = false;                    // تُعرض أولاً — الدخول لا يفشل أبداً
   document.body.classList.add('in-chat');
+  try { renderHeader(); renderMsgs(c); } catch {}
+  renderChatList();
   sendSeenAll(pid);
   setTimeout(()=> $('ta').focus(), 60);
 }
@@ -518,7 +597,7 @@ function sendAck(pid, payload){
   if (c && c.open){ try { c.send(payload); } catch {} }
 }
 
-/* ================= الاتصال (PeerJS) ================= */
+/* ================= الاتصال (PeerJS) — المعرّف ثابت لا يتغيّر ================= */
 function setNet(s){
   const m = { online:'متصل', connecting:'جارٍ الاتصال…', offline:'غير متصل' };
   $('netDot').className = 'dot ' + (s==='online'?'on':s==='connecting'?'wait':'off');
@@ -533,9 +612,10 @@ function startPeer(){
   retryTimers.forEach(t => clearTimeout(t)); retryTimers.clear();
   if (typeof Peer === 'undefined'){ setNet('offline'); schedulePeer(); return; }
   setNet('connecting');
+  if (unavail >= 3) $('netText').textContent = 'أغلق النوافذ الأخرى لنفس الحساب…';
   try { peer = new Peer(me.id, { debug:0 }); } catch { schedulePeer(); return; }
   peer.on('open', () => {
-    peerAttempt = 0; setNet('online');
+    unavail = 0; peerAttempt = 0; setNet('online');
     const w = [...wantConnect]; wantConnect.clear();
     w.forEach(tryConnect);
     Object.values(chats).forEach(c => { if (hasPendingWork(c.pid)) tryConnect(c.pid); });
@@ -549,13 +629,15 @@ function startPeer(){
   });
   peer.on('error', err => {
     const t = err && err.type;
-    if (t === 'unavailable-id'){ // نادر جداً: المعرّف محجوز — نولّد غيره
-      if (++idRegens > 3){ setNet('offline'); return; }
-      me.id = genId();
-      db.set('me', me);
-      renderProfile();
-      toast('تم توليد معرّف جديد لك: ' + me.id, 'err');
-      schedulePeer();
+    if (t === 'unavailable-id'){
+      // لا نغيّر المعرّف أبداً — الجلسة القديمة تتحرر بعد لحظات، نعيد بنفس المعرّف
+      unavail++;
+      try { peer.destroy(); } catch {}
+      peer = null;
+      setNet('connecting');
+      if (unavail >= 3) $('netText').textContent = 'أغلق النوافذ الأخرى لنفس الحساب…';
+      clearTimeout(peerTimer);
+      peerTimer = setTimeout(startPeer, 2500);
       return;
     }
     if (t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed'){ schedulePeer(); return; }
@@ -627,7 +709,7 @@ function attachConn(conn){
   conn.on('error', () => {});
 }
 function bootConn(pid, conn){
-  try { conn.send({ t:'hello', name: me.name }); } catch {}
+  try { conn.send({ t:'hello', name: me.name, avatar: me.avatar || '' }); } catch {}
   onConnOpen(pid);
 }
 function onConnOpen(pid){
@@ -671,6 +753,7 @@ function onData(pid, d){
       const c = ensureChat(pid);
       const nm = String(d.name||'').trim().slice(0,24);
       if (nm) c.name = nm;
+      c.avatar = d.avatar ? String(d.avatar).slice(0,300000) : null;
       saveChat(pid); renderChatList();
       if (activePid === pid) renderHeader();
       if (!existed){ toast(nm ? 'بدأ ' + nm + ' محادثة معك' : 'أحدهم بدأ محادثة معك'); beepIn(); }
@@ -814,6 +897,24 @@ function compressImage(file){
     img.src = url;
   });
 }
+function compressAvatar(file){
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        if (!side) throw 0;
+        const S = 256;
+        const cv = document.createElement('canvas'); cv.width = S; cv.height = S;
+        cv.getContext('2d').drawImage(img, (img.naturalWidth-side)/2, (img.naturalHeight-side)/2, side, side, 0, 0, S, S);
+        URL.revokeObjectURL(url);
+        res(cv.toDataURL('image/jpeg', 0.82));
+      } catch { URL.revokeObjectURL(url); rej(); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(); };
+    img.src = url;
+  });
+}
  $('fileBtn').addEventListener('click', () => $('fileInput').click());
  $('fileInput').addEventListener('change', async e => {
   const f = e.target.files && e.target.files[0];
@@ -837,13 +938,34 @@ function compressImage(file){
 function openViewer(src){ $('viewerImg').src = src; $('viewer').hidden = false; }
  $('viewer').addEventListener('click', () => { $('viewer').hidden = true; $('viewerImg').src = ''; });
 
-/* ================= البروفايل والدخول ================= */
+/* ================= الملف الشخصي ================= */
 function renderProfile(){
-  $('pfAvatar').textContent = initial(me.name);
-  $('pfAvatar').style.background = avColor(me.id);
+  paintAvatar($('pfAvatar'), me.name, me.avatar, me.id);
   $('pfName').textContent = me.name;
   $('pfId').textContent = me.id;
 }
+function broadcastProfile(){
+  conns.forEach(c => { if (c.open){ try { c.send({ t:'hello', name: me.name, avatar: me.avatar || '' }); } catch {} } });
+}
+function applyName(v){
+  v = String(v||'').trim();
+  if (v.length < 2 || v === me.name) return false;
+  me.name = v.slice(0,24);
+  db.set('me', me);
+  broadcastProfile();
+  renderProfile(); renderChatList();
+  if (activePid) renderHeader();
+  return true;
+}
+function applyAvatar(av){
+  me.avatar = av || null;
+  db.set('me', me);
+  broadcastProfile();
+  renderProfile(); renderChatList();
+  if (activePid) renderHeader();
+}
+
+/* ================= الدخول ================= */
 function enterApp(){
   $('welcome').hidden = true; $('app').hidden = false;
   renderProfile(); renderChatList(); setNet('connecting');
@@ -859,24 +981,25 @@ function enterApp(){
     return;
   }
   $('wErr').hidden = true;
-  me = { name: v.slice(0,24), id: genId() };
-  enterApp();                       // الدخول فوري — لا يعتمد على التخزين
-  db.set('me', me);                 // الحفظ في الخلفية
+  me = { name: v.slice(0,24), id: genId(), avatar: null }; // المعرّف يُولَّد مع الحساب مرة واحدة
+  enterApp();
+  db.set('me', me);
 });
 (async function init(){
   try {
     const saved = await db.get('me');
     if (saved && saved.name){
       const numeric = /^\d{9}$/.test(String(saved.id||''));
-      me = { name: String(saved.name), id: numeric ? String(saved.id) : genId() };
+      me = {
+        name: String(saved.name),
+        id: numeric ? String(saved.id) : genId(), // ترحيل لمرة واحدة فقط للصيغة الرقمية
+        avatar: typeof saved.avatar === 'string' ? saved.avatar : null
+      };
       const all = await db.all();
       for (const k in all) if (k.startsWith('chat:')) chats[k.slice(5)] = all[k];
       Object.values(chats).forEach(c => c.messages.forEach(m => { if (m.out && m.status !== 'seen') m.status = 'pending'; }));
+      if (!numeric) db.set('me', me);
       enterApp();
-      if (!numeric){
-        db.set('me', me);
-        toast('تم تحديث معرّفك إلى الصيغة الرقمية: ' + me.id);
-      }
     }
   } catch {}
 })();
@@ -892,8 +1015,13 @@ ta.addEventListener('input', () => {
 ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
  $('sendBtn').addEventListener('click', sendText);
 
+/* قائمة المحادثات: تفويض أحداث — النقر يعمل دائماً حتى بعد إعادة الرسم */
+ $('chatList').addEventListener('click', e => {
+  const item = e.target.closest('.chat-item');
+  if (item && item.dataset.pid) openChat(item.dataset.pid);
+});
+
  $('newChatBtn').addEventListener('click', openConnectModal);
- $('emptyNewBtn').addEventListener('click', openConnectModal);
  $('mcClose').addEventListener('click', closeConnectModal);
  $('mConnect').addEventListener('click', e => { if (e.target === $('mConnect')) closeConnectModal(); });
  $('mcInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,9); });
@@ -917,7 +1045,13 @@ function openConnectModal(){
 }
 function closeConnectModal(){ $('mConnect').hidden = true; waitingModal = null; }
 
- $('backBtn').addEventListener('click', () => document.body.classList.remove('in-chat'));
+ $('backBtn').addEventListener('click', () => {
+  activePid = null; typUntil = 0;
+  if (typingRow) typingRow.hidden = true;
+  $('conv').hidden = true;
+  document.body.classList.remove('in-chat');
+  renderChatList();
+});
  $('clearBtn').addEventListener('click', () => {
   if (!activePid) return;
   if (!confirm('مسح سجل هذه المحادثة من جهازك؟')) return;
@@ -940,21 +1074,51 @@ function closeConnectModal(){ $('mConnect').hidden = true; waitingModal = null; 
   $('pfName').hidden = true; inp.hidden = false;
   inp.value = me.name; inp.focus(); inp.select();
 });
-function commitName(){
+ $('pfNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape'){ e.target.value = me.name; e.target.blur(); } });
+ $('pfNameInput').addEventListener('blur', () => {
   const inp = $('pfNameInput');
   if (inp.hidden) return;
-  const v = inp.value.trim();
-  if (v.length >= 2 && v !== me.name){
-    me.name = v.slice(0,24);
-    db.set('me', me);
-    conns.forEach(c => { if (c.open){ try { c.send({ t:'hello', name: me.name }); } catch {} } });
-    renderProfile(); renderChatList();
-    if (activePid) renderHeader();
-  }
+  applyName(inp.value);
   inp.hidden = true; $('pfName').hidden = false;
-}
- $('pfNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape'){ e.target.value = me.name; e.target.blur(); } });
- $('pfNameInput').addEventListener('blur', commitName);
+});
+
+/* ================= الإعدادات ================= */
+ $('settingsBtn').addEventListener('click', () => {
+  $('viewList').hidden = false; $('viewAccount').hidden = true;
+  paintAvatar($('rowAvatar'), me.name, me.avatar, me.id);
+  $('rowSub').textContent = me.name + ' · ' + me.id;
+  $('mSettings').hidden = false;
+});
+ $('setClose').addEventListener('click', () => $('mSettings').hidden = true);
+ $('mSettings').addEventListener('click', e => { if (e.target === $('mSettings')) $('mSettings').hidden = true; });
+ $('rowAccount').addEventListener('click', () => {
+  $('viewList').hidden = true; $('viewAccount').hidden = false;
+  paintAvatar($('accAvatar'), me.name, me.avatar, me.id);
+  $('accName').value = me.name;
+  $('accId').textContent = me.id;
+});
+ $('accBack').addEventListener('click', () => {
+  $('viewAccount').hidden = true; $('viewList').hidden = false;
+  paintAvatar($('rowAvatar'), me.name, me.avatar, me.id);
+  $('rowSub').textContent = me.name + ' · ' + me.id;
+});
+ $('accAvWrap').addEventListener('click', () => $('avatarInput').click());
+ $('avatarInput').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  if (!f.type.startsWith('image/')){ toast('اختر ملف صورة', 'err'); return; }
+  let av; try { av = await compressAvatar(f); } catch { toast('تعذّر قراءة الصورة', 'err'); return; }
+  applyAvatar(av);
+  paintAvatar($('accAvatar'), me.name, me.avatar, me.id);
+  toast('تم تحديث الصورة الشخصية');
+});
+ $('accName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+ $('accName').addEventListener('blur', () => {
+  if (applyName($('accName').value)) toast('تم تحديث الاسم');
+  $('accName').value = me.name;
+});
+ $('accCopy').addEventListener('click', () => copyText(me.id));
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && activePid && chats[activePid]){
@@ -963,6 +1127,9 @@ document.addEventListener('visibilitychange', () => {
     sendSeenAll(activePid);
   }
 });
+/* تحرير المعرّف على سيرفر الإشارة فور إغلاق الصفحة — يمنع تعارض إعادة الدخول */
+window.addEventListener('beforeunload', () => { try { peer && peer.destroy(); } catch {} });
+window.addEventListener('pagehide', () => { try { peer && peer.destroy(); } catch {} });
 </script>
 </body>
 </html>
