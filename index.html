@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مِرسال — مراسلة مباشرة بالمعرّف</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%231E5B45' d='m22 2-7 20-4-9-9-4z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --paper:#F3EEE2; --paper2:#ECE5D2; --card:#FCF9F1;
+  --ink:#232A22; --ink2:#6B7263; --line:rgba(35,42,34,.16); --line2:rgba(35,42,34,.34);
+  --green:#1E5B45; --green-deep:#143D2E; --copper:#B25A2A; --err:#9C3A2A;
+}
+html,body{height:100%}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--paper);color:var(--ink);font-size:15px;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(35,42,34,.05) 1px,transparent 1.3px);background-size:24px 24px;pointer-events:none;z-index:0}
+[hidden]{display:none!important}
+button{font-family:inherit}
+::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:rgba(35,42,34,.22);border-radius:9px;border:2px solid transparent;background-clip:content-box}
+
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;background:var(--ink2)}
+.dot.on{background:#2E8B5F}.dot.wait{background:var(--copper)}.dot.off{background:var(--err)}
+
+.btn{font:inherit;font-weight:600;font-size:14.5px;padding:11px 18px;border-radius:12px;cursor:pointer;transition:transform .06s,box-shadow .06s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--green);color:#F5F0E4;border:1.5px solid var(--green-deep);box-shadow:0 3px 0 var(--green-deep)}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--green-deep)}
+.btn-primary:disabled{opacity:.65;cursor:default}
+.btn-ghost{background:var(--card);border:1.5px solid var(--ink);color:var(--ink);box-shadow:0 3px 0 rgba(35,42,34,.16)}
+.btn-ghost:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(35,42,34,.16)}
+.btn-danger{background:var(--err);color:#F7EFE6;border:1.5px solid #6E2719;box-shadow:0 3px 0 #6E2719}
+.btn-danger:active{transform:translateY(2px);box-shadow:0 1px 0 #6E2719}
+.btn .ic{width:17px;height:17px}
+.ibtn{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;border:1.5px solid transparent;background:transparent;color:var(--ink2);cursor:pointer;flex:none}
+.ibtn:hover{background:var(--card);border-color:var(--line2);color:var(--ink)}
+.ibtn.xs{width:26px;height:26px}.ibtn.xs .ic{width:14px;height:14px}
+.linklike{background:none;border:none;color:var(--copper);text-decoration:underline;cursor:pointer;font:inherit;font-size:inherit}
+.linklike.danger{color:var(--err);font-size:12.5px}
+.ferr{color:var(--err);font-size:13px;margin-top:8px}
+
+/* ===== شاشة الترحيب ===== */
+#welcome{position:relative;z-index:1;height:100dvh;overflow:auto;display:grid;place-items:center;padding:32px 24px}
+.w-grid{display:grid;grid-template-columns:minmax(330px,440px) minmax(380px,500px);gap:72px;align-items:center;width:min(1040px,100%)}
+.w-eyebrow{font-size:12.5px;color:var(--copper);font-weight:700;border:1.5px solid var(--copper);padding:4px 14px;border-radius:99px;display:inline-block;background:rgba(178,90,42,.06)}
+.w-title{font-family:'Aref Ruqaa',serif;font-size:clamp(58px,8vw,88px);line-height:1.15;margin:10px 0 4px}
+.w-lead{color:var(--ink2);line-height:1.9;font-size:15.5px;max-width:420px}
+.w-form{margin-top:26px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.field{width:100%}
+.field label{font-size:13px;font-weight:600;color:var(--ink2);display:block;margin-bottom:6px}
+.field input{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--ink);border-radius:12px;background:var(--card);outline:none}
+.field input:focus{border-color:var(--green);box-shadow:3px 3px 0 rgba(30,91,69,.22)}
+.shake{animation:sh .35s}
+@keyframes sh{25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(4px)}}
+#afterGen{display:flex;gap:10px;flex-wrap:wrap}
+.w-note{margin-top:22px;font-size:13px;color:var(--ink2);line-height:1.8}
+
+/* بطاقة المعرّف (تذكرة) */
+.ticket{position:relative;transform:rotate(-2.4deg);transition:transform .4s ease}
+.ticket:hover{transform:rotate(-1deg) translateY(-4px)}
+.tk{position:relative;background:var(--card);border:1.5px solid var(--ink);border-radius:18px;box-shadow:10px 10px 0 rgba(35,42,34,.10);overflow:hidden}
+.tk-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1.5px solid var(--line2);font-size:12px;letter-spacing:.5px;color:var(--ink2);font-weight:600}
+.tk-brand{font-family:'Aref Ruqaa',serif;font-size:21px;color:var(--green);letter-spacing:0}
+.tk-body{display:grid;grid-template-columns:1fr 128px}
+.tk-info{padding:18px;border-inline-end:2px dashed var(--line2)}
+.tk-label{font-size:11px;color:var(--ink2);font-weight:600;margin-bottom:4px}
+.tk-name{font-family:'Aref Ruqaa',serif;font-size:27px;min-height:42px;line-height:1.3;margin-bottom:14px;word-break:break-word}
+.tk-id{font-weight:600;font-size:19px;letter-spacing:1.5px;color:var(--green);direction:ltr;text-align:right;word-break:break-all}
+.tk-qr{padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center}
+.tk-qr canvas{border:1.5px solid var(--line2);border-radius:8px}
+.tk-qr-cap{font-size:10.5px;color:var(--ink2)}
+.tk-qr-fb{font-size:10.5px;color:var(--err);text-align:center}
+.tk-foot{border-top:2px dashed var(--line2);padding:10px 18px;font-size:11.5px;color:var(--ink2);text-align:center}
+.tk-notch{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--paper);left:128px;transform:translateX(-50%);z-index:2}
+.tk-notch.n1{top:-11px}.tk-notch.n2{bottom:-11px}
+.stamp{position:absolute;top:-40px;left:-26px;width:116px;height:116px;color:var(--copper);mix-blend-mode:multiply;pointer-events:none;opacity:0;transform:rotate(-12deg) scale(2.3)}
+.stamp.in{animation:stampIn .55s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes stampIn{0%{opacity:0;transform:rotate(5deg) scale(2.3)}60%{opacity:1}100%{opacity:.92;transform:rotate(-12deg) scale(1)}}
+
+/* ===== التطبيق ===== */
+#app{position:relative;z-index:1;height:100dvh;display:flex}
+#sidebar{width:345px;background:var(--paper2);border-inline-end:1.5px solid var(--line2);display:flex;flex-direction:column;flex:none}
+.sb-top{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1.5px solid var(--line2)}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-mark{width:32px;height:32px;background:var(--green);border:1.5px solid var(--green-deep);border-radius:9px;display:grid;place-items:center;color:#F5F0E4}
+.brand-mark .ic{width:16px;height:16px}
+.brand-name{font-family:'Aref Ruqaa',serif;font-size:23px}
+.net{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink2)}
+.pf{margin:12px 14px;background:var(--card);border:1.5px solid var(--ink);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center;box-shadow:3px 3px 0 rgba(35,42,34,.12)}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#F7F2E6;font-weight:700;font-size:18px;border:1.5px solid rgba(0,0,0,.25);flex:none;user-select:none}
+.avatar.sm{width:36px;height:36px;font-size:15px}
+.pf-main{flex:1;min-width:0}
+.pf-namewrap{display:flex;align-items:center;gap:4px}
+.pf-namewrap span{font-weight:700;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+#pfNameInput{font:inherit;font-size:13px;border:1.5px solid var(--green);border-radius:7px;padding:2px 6px;width:110px;background:var(--paper)}
+.pf-id{font-size:11.5px;letter-spacing:.8px;color:var(--green);direction:ltr;text-align:right;font-weight:600}
+.pf-actions{display:flex;flex-direction:column;gap:2px}
+#newChatBtn{margin:2px 14px 10px;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(--green);color:#F5F0E4;border:1.5px solid var(--green-deep);border-radius:12px;font-weight:600;cursor:pointer;box-shadow:0 3px 0 var(--green-deep);font-size:14.5px}
+#newChatBtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--green-deep)}
+#chatList{flex:1;overflow-y:auto}
+.list-empty{padding:26px 18px;text-align:center;color:var(--ink2);font-size:13px;line-height:1.9}
+.chat-item{display:flex;gap:10px;width:100%;text-align:start;padding:10px 14px;border:none;border-bottom:1px solid var(--line);background:transparent;cursor:pointer;align-items:center}
+.chat-item:hover{background:rgba(252,249,241,.7)}
+.chat-item.active{background:var(--card);box-shadow:inset 3px 0 0 var(--copper)}
+.ci-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ci-row1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ci-name{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-time{font-size:11px;color:var(--ink2);flex:none}
+.ci-row2{display:flex;gap:5px;align-items:center;font-size:12.5px;color:var(--ink2);min-width:0}
+.ci-row2 .st{width:14px;height:11px}
+.ci-row2 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{background:var(--copper);color:#fff;font-size:11px;font-weight:700;border-radius:99px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 6px;flex:none}
+.sb-foot{padding:10px 14px;border-top:1.5px solid var(--line);text-align:center;position:relative}
+.pop-wrap{position:relative}
+.pop{position:absolute;top:calc(100% + 8px);inset-inline-end:0;background:var(--card);border:1.5px solid var(--ink);border-radius:12px;padding:13px 15px;width:235px;z-index:40;box-shadow:5px 5px 0 rgba(35,42,34,.12);font-size:13px;line-height:1.7}
+.pop.up{top:auto;bottom:calc(100% + 8px)}
+.pop .row{display:flex;gap:8px;margin-top:10px}
+.pop .btn{padding:7px 14px;font-size:13px;flex:1}
+
+#chatpane{flex:1;display:flex;flex-direction:column;min-width:0}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px}
+.es-art{width:min(260px,70%)}
+.es-title{font-family:'Aref Ruqaa',serif;font-size:34px;margin-top:6px}
+.empty p{color:var(--ink2);max-width:360px;line-height:1.9;font-size:14px;margin-bottom:12px}
+#conv{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--paper)}
+.c-head{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--paper2);border-bottom:1.5px solid var(--line2)}
+.back{display:none}
+.c-meta{flex:1;min-width:0}
+.c-name{font-weight:700;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-status{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink2)}
+.c-status .typing{color:var(--copper);font-weight:600}
+#msgs{flex:1;overflow-y:auto;padding:20px clamp(14px,5%,48px);display:flex;flex-direction:column}
+.msg{display:flex;margin-top:2px;animation:pop .18s ease-out}
+@keyframes pop{from{transform:translateY(7px);opacity:0}}
+.msg.out{justify-content:flex-start}
+.msg.in{justify-content:flex-end}
+.bubble{max-width:min(72%,560px);padding:8px 13px 6px;border-radius:14px}
+.msg.out .bubble{background:var(--green);color:#F4EFE2;border:1.5px solid var(--green-deep);border-end-start-radius:4px}
+.msg.in .bubble{background:var(--card);border:1.5px solid var(--line2);border-end-end-radius:4px;box-shadow:0 2px 0 rgba(35,42,34,.06)}
+.btext{white-space:pre-wrap;word-break:break-word;line-height:1.65}
+.bmeta{display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:2px;font-size:10.5px;opacity:.8}
+.msg.in .bmeta{color:var(--ink2)}
+.st{width:15px;height:12px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.msg.out .stwrap[data-st="seen"] .st{stroke:#9FE8C6}
+.dsep{align-self:center;margin:14px 0 8px;font-size:11.5px;color:var(--ink2);background:var(--card);border:1px solid var(--line);padding:3px 14px;border-radius:99px}
+.no-msgs{margin:auto;color:var(--ink2);font-size:13.5px;text-align:center;max-width:320px;line-height:1.9;border:1.5px dashed var(--line2);padding:16px 24px;border-radius:14px}
+.tdots{display:flex;gap:4px;padding:13px 15px;align-items:center}
+.tdots span{width:6px;height:6px;border-radius:50%;background:var(--ink2);animation:tb 1s infinite}
+.tdots span:nth-child(2){animation-delay:.15s}.tdots span:nth-child(3){animation-delay:.3s}
+@keyframes tb{0%,60%,100%{transform:none;opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.composer{display:flex;gap:10px;align-items:flex-end;padding:12px 16px;border-top:1.5px solid var(--line2);background:var(--paper2)}
+#ta{flex:1;resize:none;border:1.5px solid var(--ink);background:var(--card);border-radius:14px;padding:11px 14px;font:inherit;font-size:15px;max-height:130px;outline:none;line-height:1.5}
+#ta:focus{border-color:var(--green)}
+#sendBtn{width:47px;height:47px;border-radius:50%;background:var(--green);color:#F5F0E4;border:1.5px solid var(--green-deep);box-shadow:0 3px 0 var(--green-deep);display:grid;place-items:center;cursor:pointer;flex:none}
+#sendBtn:hover{filter:brightness(1.07)}
+#sendBtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--green-deep)}
+
+/* ===== النوافذ والتنبيهات ===== */
+.overlay{position:fixed;inset:0;background:rgba(35,42,34,.45);display:grid;place-items:center;z-index:50;padding:20px}
+.modal{background:var(--card);border:1.5px solid var(--ink);border-radius:18px;padding:24px;width:min(430px,100%);box-shadow:8px 8px 0 rgba(35,42,34,.16);position:relative;animation:mIn .22s ease}
+@keyframes mIn{from{transform:translateY(14px) scale(.97);opacity:0}}
+.modal h3{font-family:'Aref Ruqaa',serif;font-size:27px;margin-bottom:4px}
+.modal>p{color:var(--ink2);font-size:13.5px;line-height:1.8;margin-bottom:16px}
+.mx{position:absolute;top:12px;inset-inline-start:12px}
+.modal input{width:100%;font:inherit;font-size:17px;font-weight:600;letter-spacing:1.5px;padding:12px 14px;border:1.5px solid var(--ink);border-radius:12px;background:var(--paper);outline:none;text-align:center}
+.modal input:focus{border-color:var(--green)}
+.modal .btn-primary{width:100%;margin-top:14px}
+.merr{color:var(--err);font-size:13px;margin-top:10px;line-height:1.7}
+.qr-box{display:grid;place-items:center;padding:16px;background:var(--paper);border:1.5px dashed var(--line2);border-radius:14px;margin-bottom:14px}
+#qrId{direction:ltr;letter-spacing:2px;font-weight:700;color:var(--green);font-size:19px;text-align:center}
+.qr-fb{color:var(--err);font-size:13px}
+#toasts{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;width:max-content;max-width:92vw}
+.toast{background:var(--ink);color:#F4EFE2;padding:10px 18px;border-radius:12px;font-size:13.5px;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;transform:translateY(-8px);transition:.25s;max-width:100%;text-align:center}
+.toast.show{opacity:1;transform:none}
+.toast.err{background:var(--err)}
+
+@media(max-width:960px){
+  .w-grid{grid-template-columns:1fr;gap:52px;justify-items:center;text-align:center}
+  .w-lead{max-width:none}.w-form{align-items:stretch}
+  .ticket{transform:rotate(-1.4deg)}
+}
+@media(max-width:860px){
+  #sidebar{width:100%;border-inline-end:none}
+  #conv{position:fixed;inset:0;z-index:20;display:none}
+  body.in-chat #conv{display:flex}
+  body.in-chat #sidebar{display:none}
+  .back{display:grid}
+  .bubble{max-width:82%}
+}
+</style>
+</head>
+<body>
+
+<!-- مكتبة الأيقونات -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3z"/><path d="M21 14v1.6M14 21h1.6M17.5 17.5H21V21h-3.5z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+<symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m16 9 6 6M22 9l-6 6"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+</defs></svg>
+
+<!-- ===== شاشة الترحيب ===== -->
+<section id="welcome">
+  <div class="w-grid">
+    <div>
+      <span class="w-eyebrow">اتصال مباشر · معرّف لكل مراسل</span>
+      <h1 class="w-title">مِرسال</h1>
+      <p class="w-lead">رسائل تصل من جهاز إلى جهاز مباشرة. اكتب اسمك، خُذ معرّفك الخاص، وشاركه مع من تحب — ثم راسل أي معرّف تعرفه.</p>
+      <form id="nameForm" novalidate>
+        <div class="field">
+          <label for="nameInput">اسمك الظاهر للمراسلين</label>
+          <input id="nameInput" maxlength="24" autocomplete="off" placeholder="مثال: سلمى، أبو خالد، فريق القراءة…">
+        </div>
+        <p class="ferr" id="nameErr" hidden>اكتب اسماً من حرفين على الأقل.</p>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin-top:4px">
+          <button class="btn btn-primary" type="submit" id="startBtn">أنشئ معرّفي</button>
+          <div id="afterGen" hidden>
+            <button class="btn btn-primary" type="button" id="enterBtn">الدخول إلى مِرسال</button>
+            <button class="btn btn-ghost" type="button" id="copyIdBtn1">نسخ المعرّف</button>
+          </div>
+        </div>
+      </form>
+      <p class="w-note">تجربة سريعة؟ <button type="button" class="linklike" id="ghostBtn">افتح نافذة موازية</button> لتسجيل مراسل ثانٍ على نفس الجهاز.</p>
+    </div>
+
+    <div class="ticket">
+      <div class="tk">
+        <div class="tk-head"><span>بطاقة مراسل</span><span class="tk-brand">مِرسال</span></div>
+        <div class="tk-body">
+          <div class="tk-info">
+            <div class="tk-label">الاسم</div>
+            <div class="tk-name" id="tkName">—</div>
+            <div class="tk-label">المعرّف</div>
+            <div class="tk-id" id="tkId" dir="ltr">MRSL-••••-•••</div>
+          </div>
+          <div class="tk-qr">
+            <canvas id="tkQr" width="96" height="96"></canvas>
+            <span class="tk-qr-fb" id="tkQrFb" hidden>الرمز غير متاح الآن</span>
+            <span class="tk-qr-cap">امسح للمشاركة</span>
+          </div>
+        </div>
+        <div class="tk-foot">اتصال مباشر بين جهازين — بلا حسابات ولا وسطاء</div>
+        <span class="tk-notch n1"></span><span class="tk-notch n2"></span>
+      </div>
+      <svg class="stamp" id="tkStamp" viewBox="0 0 120 120">
+        <defs><path id="stc" d="M60 12a48 48 0 1 1-.01 0"/></defs>
+        <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/>
+        <circle cx="60" cy="60" r="37" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text font-size="10.5" letter-spacing="1" fill="currentColor" font-weight="600" font-family="IBM Plex Sans Arabic,sans-serif">
+          <textPath href="#stc" xlink:href="#stc" textLength="299" lengthAdjust="spacingAndGlyphs">MIRSAL • DIRECT POST • MIRSAL • DIRECT POST •</textPath>
+        </text>
+        <g transform="translate(60,60) scale(.72) translate(-12,-12)" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== التطبيق ===== -->
+<div id="app" hidden>
+  <aside id="sidebar">
+    <div class="sb-top">
+      <div class="brand"><span class="brand-mark"><svg class="ic"><use href="#i-send"/></svg></span><span class="brand-name">مِرسال</span></div>
+      <div class="net"><span class="dot wait" id="netDot"></span><span id="netText">…</span>
+        <button class="ibtn" id="muteBtn" title="أصوات التنبيه"><svg class="ic"><use id="muteUse" href="#i-vol"/></svg></button>
+      </div>
+    </div>
+    <div class="pf">
+      <span class="avatar" id="pfAvatar">؟</span>
+      <div class="pf-main">
+        <div class="pf-namewrap"><span id="pfName"></span><input id="pfNameInput" hidden maxlength="24">
+          <button class="ibtn xs" id="editNameBtn" title="تعديل الاسم"><svg class="ic"><use href="#i-pencil"/></svg></button></div>
+        <div class="pf-id" id="pfId" dir="ltr"></div>
+      </div>
+      <div class="pf-actions">
+        <button class="ibtn" id="copyIdBtn" title="نسخ المعرّف"><svg class="ic"><use href="#i-copy"/></svg></button>
+        <button class="ibtn" id="qrBtn" title="رمز المشاركة"><svg class="ic"><use href="#i-qr"/></svg></button>
+      </div>
+    </div>
+    <button id="newChatBtn"><svg class="ic"><use href="#i-plus"/></svg>محادثة جديدة</button>
+    <div id="chatList"></div>
+    <div class="sb-foot pop-wrap">
+      <button class="linklike danger" id="logoutBtn">تسجيل الخروج ومسح البيانات</button>
+      <div class="pop up" id="confirmLogout" hidden>
+        <p>سيُحذف معرّفك وسجل محادثاتك من هذا المتصفح.</p>
+        <div class="row"><button class="btn btn-danger" id="loYes">حذف</button><button class="btn btn-ghost" id="loNo">إلغاء</button></div>
+      </div>
+    </div>
+  </aside>
+
+  <main id="chatpane">
+    <div id="empty" class="empty">
+      <svg class="es-art" viewBox="0 0 240 90">
+        <path d="M14 70C70 8 170 8 226 62" fill="none" stroke="#6B7263" stroke-width="1.8" stroke-dasharray="1 7" stroke-linecap="round"/>
+        <circle cx="14" cy="70" r="4" fill="#B25A2A"/>
+        <g transform="translate(228,60) rotate(-20)"><path d="M8 0L-16 -9L-9 0L-16 9Z" fill="#1E5B45"/></g>
+      </svg>
+      <h2 class="es-title">ابدأ مراسلة</h2>
+      <p>اختر محادثة من القائمة، أو الصق معرّف مراسلك في «محادثة جديدة» لتصل الرسائل مباشرة.</p>
+      <button class="btn btn-primary" id="emptyNewBtn"><svg class="ic"><use href="#i-plus"/></svg>محادثة جديدة</button>
+    </div>
+
+    <section id="conv" hidden>
+      <header class="c-head">
+        <button class="ibtn back" id="backBtn"><svg class="ic"><use href="#i-back"/></svg></button>
+        <span class="avatar sm" id="cAvatar">؟</span>
+        <div class="c-meta">
+          <div class="c-name" id="cName"></div>
+          <div class="c-status"><span class="dot" id="cDot"></span><span id="cStatusText"></span></div>
+        </div>
+        <div class="pop-wrap">
+          <button class="ibtn" id="clearBtn" title="مسح المحادثة"><svg class="ic"><use href="#i-trash"/></svg></button>
+          <div class="pop" id="confirmClear" hidden>
+            <p>سيُمسح سجل هذه المحادثة من جهازك فقط، ولن يتأثر جهاز المراسل.</p>
+            <div class="row"><button class="btn btn-danger" id="ccYes">مسح</button><button class="btn btn-ghost" id="ccNo">إلغاء</button></div>
+          </div>
+        </div>
+      </header>
+      <div id="msgs"></div>
+      <div class="composer">
+        <textarea id="ta" rows="1" placeholder="اكتب رسالة…"></textarea>
+        <button id="sendBtn" title="إرسال"><svg class="ic"><use href="#i-send"/></svg></button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- نافذة الاتصال بمعرّف -->
+<div class="overlay" id="mConnect" hidden>
+  <div class="modal">
+    <button class="ibtn mx" id="mcClose"><svg class="ic"><use href="#i-x"/></svg></button>
+    <h3>محادثة جديدة</h3>
+    <p>أدخل معرّف المراسل كما نسخه لك — مثال: <b dir="ltr">MRSL-K4D9-2QF</b></p>
+    <input id="mcInput" dir="ltr" maxlength="20" placeholder="MRSL-XXXX-XXX" autocomplete="off" spellcheck="false">
+    <div class="merr" id="mcErr" hidden></div>
+    <button class="btn btn-primary" id="mcGo">اتصال</button>
+  </div>
+</div>
+
+<!-- نافذة رمز المشاركة -->
+<div class="overlay" id="mQr" hidden>
+  <div class="modal">
+    <button class="ibtn mx" id="qClose"><svg class="ic"><use href="#i-x"/></svg></button>
+    <h3>معرّفك</h3>
+    <p>ليصلك إلى المراسلة، شارك هذا الرمز أو انسخ المعرّف.</p>
+    <div class="qr-box">
+      <canvas id="qrCanvas"></canvas>
+      <span class="qr-fb" id="qrFb" hidden>الرمز غير متاح الآن — استخدم النسخ أدناه</span>
+    </div>
+    <div id="qrId"></div>
+    <button class="btn btn-primary" id="qrCopy"><svg class="ic"><use href="#i-copy"/></svg>نسخ المعرّف</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+/* ============ أدوات عامة ============ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+const ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // بلا I,L,O,0,1 لتفادي الالتباس
+
+function genId(){ // معرّف عشوائي: MRSL-XXXX-XXX
+  const b = new Uint8Array(7); crypto.getRandomValues(b);
+  let s = ''; for (let i = 0; i < 7; i++) s += ALPHA[b[i] % ALPHA.length];
+  return 'MRSL-' + s.slice(0,4) + '-' + s.slice(4);
+}
+function normId(raw){
+  let s = String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (s.startsWith('MRSL')) s = s.slice(4);
+  s = s.slice(0,7);
+  return /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{7}$/.test(s) ? 'MRSL-'+s.slice(0,4)+'-'+s.slice(4) : null;
+}
+const timeFmt = t => new Date(t).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
+const dayKey  = t => new Date(t).toDateString();
+function dayLabel(t){
+  const d = new Date(t), today = new Date(), y = new Date(Date.now()-864e5);
+  if (d.toDateString() === today.toDateString()) return 'اليوم';
+  if (d.toDateString() === y.toDateString())  return 'أمس';
+  return d.toLocaleDateString('ar',{weekday:'long',day:'numeric',month:'long'});
+}
+const AV = ['#1E5B45','#B25A2A','#7C3A2D','#4A5D23','#31456A','#6E4A2F'];
+const avColor = id => AV[[...id].reduce((a,c)=>a+c.charCodeAt(0),0) % AV.length];
+const initial = n => [...String(n).trim()][0] || '؟';
+
+/* ============ التخزين ============ */
+const GUEST = /[?&]guest/.test(location.search); // نافذة تجربة موازية بمساحة تخزين مستقلة
+const K = { me:'mirsal.me', chats:'mirsal.chats', mute:'mirsal.mute' };
+if (GUEST) for (const k in K) K[k] += '-b';
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k){ try { localStorage.removeItem(k); } catch {} }
+};
+
+/* ============ الحالة ============ */
+let me = null, chats = {}, activePid = null;
+let peer = null, conns = new Map(), connecting = new Set(), connectTimers = new Map();
+let pending = new Map(), waitingModal = null;
+let lastDay = null, typingRow = null, typUntil = 0, typHideT = 0, lastTypeSent = 0;
+let muted = store.get(K.mute) === '1';
+
+const saveChats = () => store.set(K.chats, chats);
+function ensureChat(pid){
+  if (!chats[pid]) chats[pid] = { pid, name:null, unread:0, created:Date.now(), last:0, messages:[] };
+  return chats[pid];
+}
+const chatTitle = c => c.name || ('مراسل ·' + c.pid.slice(-3));
+
+/* ============ التنبيهات والصوت ============ */
+function toast(msg, kind){
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  $('toasts').appendChild(t);
+  requestAnimationFrame(()=> t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, 3400);
+}
+let actx = null;
+function tone(f, at, dur, vol=.14, type='sine'){
+  try {
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime + at;
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + .05);
+  } catch {}
+}
+const beepIn  = () => { if (!muted) { tone(620,0,.09); tone(880,.09,.16); } };
+const beepOut = () => { if (!muted) tone(1150,0,.05,.06,'triangle'); };
+const beepErr = () => { if (!muted) tone(230,0,.2,.1,'square'); };
+
+async function copyText(t, okMsg){
+  try { await navigator.clipboard.writeText(t); }
+  catch {
+    const x = document.createElement('textarea');
+    x.value = t; document.body.appendChild(x); x.select();
+    try { document.execCommand('copy'); } catch {}
+    x.remove();
+  }
+  toast(okMsg || 'نُسخ المعرّف');
+}
+function drawQr(canvas, text, size){
+  if (window.QRCode && QRCode.toCanvas) {
+    QRCode.toCanvas(canvas, text, {width:size, margin:1, color:{dark:'#232A22', light:'#FCF9F1'}}, e => { if (e) canvas.hidden = true; });
+  } else canvas.hidden = true;
+}
+
+/* ============ حالات الرسائل (علامات التسليم) ============ */
+const ST_SVG = {
+  pending:  '<svg class="st" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v4.7l2.8 1.7"/></svg>',
+  sent:     '<svg class="st" viewBox="0 0 17 13"><path d="M2 7.2 5.6 10.8 15 2.4"/></svg>',
+  delivered:'<svg class="st" viewBox="0 0 19 13"><path d="M1.5 7.2 5 10.8 14.5 2.4"/><path d="M8.2 8.2 10.2 10.8 17.5 2.4"/></svg>',
+  seen:     '<svg class="st" viewBox="0 0 19 13"><path d="M1.5 7.2 5 10.8 14.5 2.4"/><path d="M8.2 8.2 10.2 10.8 17.5 2.4"/></svg>'
+};
+function updateMsgDom(u, st){
+  const w = document.querySelector(`.msg[data-uid="${u}"] .stwrap`);
+  if (w) { w.dataset.st = st; w.innerHTML = ST_SVG[st]; }
+}
+
+/* ============ طباعة الرسائل ============ */
+const msgsEl = $('msgs');
+function scrollBottom(force){
+  requestAnimationFrame(()=>{
+    const near = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 170;
+    if (force || near) msgsEl.scrollTop = msgsEl.scrollHeight;
+  });
+}
+function appendMsgDom(m){
+  const dk = dayKey(m.time);
+  if (dk !== lastDay) {
+    msgsEl.insertAdjacentHTML('beforeend', `<div class="dsep"><span>${esc(dayLabel(m.time))}</span></div>`);
+    lastDay = dk;
+  }
+  const div = document.createElement('div');
+  div.className = 'msg ' + (m.out ? 'out' : 'in');
+  div.dataset.uid = m.uid;
+  div.innerHTML = `<div class="bubble"><div class="btext"></div>
+    <div class="bmeta"><span class="btime">${timeFmt(m.time)}</span>
+    <span class="stwrap" data-st="${m.out ? m.status : ''}">${m.out ? ST_SVG[m.status] : ''}</span></div></div>`;
+  div.querySelector('.btext').textContent = m.text;
+  msgsEl.insertBefore(div, typingRow);
+  msgsEl.appendChild(typingRow); // يبقى المؤشر آخراً
+}
+function renderMsgs(c){
+  msgsEl.innerHTML = ''; lastDay = null;
+  typingRow.hidden = true;
+  msgsEl.appendChild(typingRow);
+  if (!c.messages.length)
+    msgsEl.insertAdjacentHTML('beforeend', '<div class="no-msgs">لا رسائل بعد — اكتب أول تحية، وستصل فور اكتمال الاتصال.</div>');
+  c.messages.forEach(appendMsgDom);
+  scrollBottom(true);
+}
+
+/* ============ القائمة والهيدر ============ */
+function updateTitle(){
+  const n = Object.values(chats).reduce((a,c)=>a+(c.unread||0),0);
+  document.title = n ? `(${n}) مِرسال` : 'مِرسال — مراسلة مباشرة بالمعرّف';
+}
+function renderChatList(){
+  const list = $('chatList'); list.innerHTML = '';
+  const arr = Object.values(chats).sort((a,b)=>(b.last||b.created)-(a.last||a.created));
+  if (!arr.length) { list.innerHTML = '<div class="list-empty">لا محادثات بعد.<br>ابدأ واحدة بمعرّف مراسلك.</div>'; updateTitle(); return; }
+  arr.forEach(c => {
+    const last = c.messages[c.messages.length-1];
+    const typing = (c.pid === activePid) && typUntil > Date.now();
+    const el = document.createElement('button');
+    el.className = 'chat-item' + (c.pid === activePid ? ' active' : '');
+    el.innerHTML = `
+      <span class="avatar" style="background:${avColor(c.pid)}">${esc(initial(chatTitle(c)))}</span>
+      <span class="ci-main">
+        <span class="ci-row1"><span class="ci-name">${esc(chatTitle(c))}</span><span class="ci-time">${last ? timeFmt(last.time) : ''}</span></span>
+        <span class="ci-row2">${
+          typing ? '<span style="color:var(--copper);font-weight:600">يكتب…</span>'
+          : last ? `${last.out ? `<span class="stwrap" data-st="${last.status}">${ST_SVG[last.status]}</span>` : ''}<span>${esc(last.text)}</span>`
+          : '<span>محادثة جديدة — بانتظار أول رسالة</span>'
+        }</span>
+      </span>
+      ${c.unread ? `<span class="badge">${c.unread > 99 ? '99+' : c.unread}</span>` : ''}`;
+    el.onclick = () => openChat(c.pid);
+    list.appendChild(el);
+  });
+  updateTitle();
+}
+function renderHeader(){
+  if (!activePid) return;
+  const c = chats[activePid]; if (!c) return;
+  const a = $('cAvatar');
+  a.textContent = initial(chatTitle(c));
+  a.style.background = avColor(c.pid);
+  $('cName').textContent = chatTitle(c);
+  const dot = $('cDot'), st = $('cStatusText');
+  st.className = '';
+  if (typUntil > Date.now()) { dot.className = 'dot wait'; st.textContent = 'يكتب الآن…'; st.className = 'typing'; }
+  else {
+    const conn = conns.get(c.pid);
+    if (conn && conn.open) { dot.className = 'dot on'; st.textContent = 'متصل الآن — الرسائل تصل فوراً'; }
+    else if (connecting.has(c.pid)) { dot.className = 'dot wait'; st.textContent = 'جارٍ الاتصال…'; }
+    else { dot.className = 'dot off'; st.textContent = 'غير متصل — سيُجرى الاتصال عند الإرسال'; }
+  }
+}
+function openChat(pid){
+  const c = chats[pid]; if (!c) return;
+  activePid = pid; typUntil = 0;
+  c.unread = 0; saveChats();
+  $('empty').hidden = true; $('conv').hidden = false;
+  renderHeader(); renderMsgs(c); renderChatList();
+  document.body.classList.add('in-chat');
+  const uids = c.messages.filter(m=>!m.out).map(m=>m.uid);
+  if (uids.length) sendSeen(pid, uids);
+  setTimeout(()=> $('ta').focus(), 60);
+}
+
+/* ============ طبقة الاتصال (PeerJS / WebRTC) ============ */
+function setNet(s){
+  const map = { online:'متصل بالشبكة', connecting:'جارٍ الاتصال بالشبكة…', offline:'تعذّر الوصول إلى الشبكة' };
+  $('netDot').className = 'dot ' + s;
+  $('netText').textContent = map[s];
+}
+function startPeer(){
+  if (typeof Peer === 'undefined') { setNet('offline'); return; }
+  try { peer = new Peer(me.id, { debug: 0 }); }
+  catch { setNet('offline'); return; }
+  peer.on('open', () => setNet('online'));
+  peer.on('connection', c => attachConn(c));
+  peer.on('disconnected', () => {
+    setNet('connecting');
+    setTimeout(()=>{ try { peer.reconnect(); } catch {} }, 1500);
+  });
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id') { // المعرف مأخوذ (نادر): ولّد غيره
+      try { peer.destroy(); } catch {}
+      me.id = genId(); store.set(K.me, me); renderProfile(); startPeer(); return;
+    }
+    if (err.type === 'peer-unavailable') {
+      const m = (err.message||'').match(/MRSL-[A-Z0-9-]+/i);
+      failConn(m ? normId(m[0]) : null, 'لا يوجد مراسل بهذا المعرّف الآن.'); return;
+    }
+    if (['network','server-error','socket-error','socket-closed','browser-incompatible'].includes(err.type)) setNet('offline');
+  });
+}
+function attachConn(conn){
+  const pid = conn.peer;
+  const prev = conns.get(pid);
+  if (prev && prev !== conn) {
+    if (prev.open) { try { conn.close(); } catch {} return; } // لا ازدواج
+    try { prev.close(); } catch {}
+  }
+  conns.set(pid, conn);
+  conn.on('open', () => {
+    if (conns.get(pid) !== conn) { try { conn.close(); } catch {} return; }
+    try { conn.send({ t:'hello', name: me.name }); } catch {}
+    onConnOpen(pid);
+  });
+  conn.on('data', d => onData(pid, d));
+  conn.on('close', () => { if (conns.get(pid) === conn) { conns.delete(pid); onConnClose(pid); } });
+  conn.on('error', () => {});
+}
+function clearTimer(pid){ const t = connectTimers.get(pid); if (t) { clearTimeout(t); connectTimers.delete(pid); } }
+function onConnOpen(pid){
+  connecting.delete(pid); clearTimer(pid); setNet('online');
+  const isNew = !chats[pid];
+  if (isNew) ensureChat(pid);
+  const c = chats[pid];
+  if (c) c.messages.forEach(m => { if (m.out && m.status === 'pending') { m.status = 'sent'; updateMsgDom(m.uid,'sent'); } });
+  flushPending(pid);
+  saveChats(); renderChatList();
+  if (activePid === pid) { renderHeader(); const u = c && c.messages.filter(m=>!m.out).map(m=>m.uid); if (u && u.length) sendSeen(pid, u); }
+  if (waitingModal === pid) {
+    closeConnectModal();
+    if (isNew) openChat(pid);
+    toast('تم الاتصال بـ ' + chatTitle(c));
+  } else if (isNew) { openChat(pid); toast('تم الاتصال بـ ' + chatTitle(c)); }
+}
+function failConn(pid, msg){
+  if (pid) { connecting.delete(pid); clearTimer(pid); }
+  if (waitingModal === pid || !pid) {
+    if (waitingModal !== null) {
+      $('mcErr').textContent = msg; $('mcErr').hidden = false;
+      $('mcGo').textContent = 'اتصال'; $('mcGo').disabled = false;
+      waitingModal = null; beepErr();
+    } else toast(msg, 'err');
+  }
+  if (activePid === pid) renderHeader();
+}
+function onConnClose(pid){
+  if (activePid === pid) renderHeader();
+}
+function push(pid, payload){ // إرسال فوري أو إدراج في طابور حتى يكتمل الاتصال
+  const c = conns.get(pid);
+  if (c && c.open) { try { c.send(payload); return true; } catch {} }
+  const q = pending.get(pid) || []; q.push(payload); pending.set(pid, q);
+  return false;
+}
+function flushPending(pid){
+  const q = pending.get(pid); if (!q || !q.length) return;
+  const c = conns.get(pid); if (!c || !c.open) return;
+  let sent = false;
+  q.forEach(pl => {
+    try {
+      c.send(pl); sent = true;
+      if (pl.t === 'msg' && chats[pid]) {
+        const m = chats[pid].messages.find(x => x.uid === pl.uid);
+        if (m) { m.status = 'sent'; updateMsgDom(m.uid, 'sent'); }
+      }
+    } catch {}
+  });
+  pending.set(pid, []);
+  if (sent) { saveChats(); renderChatList(); beepOut(); }
+}
+function sendSeen(pid, uids){
+  const c = conns.get(pid);
+  if (c && c.open && uids.length) { try { c.send({ t:'seen', uids: uids.slice(-80) }); } catch {} }
+}
+function tryConnect(pid){
+  if (!peer || !peer.open) { toast('لا يوجد اتصال بالشبكة بعد — سيُعاد المحاولة تلقائياً', 'err'); return; }
+  if (connecting.has(pid)) return;
+  const ex = conns.get(pid); if (ex && ex.open) return;
+  connecting.add(pid);
+  let conn;
+  try { conn = peer.connect(pid, { reliable:true, serialization:'json' }); }
+  catch { connecting.delete(pid); failConn(pid, 'تعذّر بدء الاتصال.'); return; }
+  attachConn(conn);
+  connectTimers.set(pid, setTimeout(()=>{ if (!(conns.get(pid)||{}).open) failConn(pid, 'انتهت المهلة — تأكد من صحة المعرّف ومن أن الطرف الآخر مفتوح على مِرسال.'); }, 14000));
+  if (activePid === pid) renderHeader();
+}
+function ensureConn(pid){
+  const c = conns.get(pid);
+  if (c && c.open) return;
+  tryConnect(pid);
+}
+
+/* ============ استقبال البيانات ============ */
+function onData(pid, d){
+  if (!d || typeof d !== 'object') return;
+  switch (d.t) {
+    case 'hello': {
+      const existed = !!chats[pid];
+      const c = ensureChat(pid);
+      const nm = String(d.name||'').trim().slice(0,24);
+      if (nm) c.name = nm;
+      saveChats(); renderChatList();
+      if (activePid === pid) renderHeader();
+      if (!existed) { toast(nm ? 'بدأ ' + nm + ' محادثة معك' : 'أحدهم بدأ محادثة معك'); beepIn(); }
+      break;
+    }
+    case 'msg': {
+      const c = ensureChat(pid);
+      const m = { uid: String(d.uid||uid()), text: String(d.text||'').slice(0,2000), time: +d.time || Date.now(), out:false, status:'seen' };
+      c.messages.push(m); c.last = m.time;
+      const isActive = activePid === pid && !document.hidden;
+      if (!isActive) c.unread++;
+      saveChats(); renderChatList();
+      if (activePid === pid) {
+        const nm = msgsEl.querySelector('.no-msgs'); if (nm) nm.remove();
+        appendMsgDom(m); scrollBottom(); sendSeen(pid, [m.uid]);
+      }
+      beepIn();
+      if (!isActive) toast(chatTitle(c) + ': ' + m.text.slice(0,60));
+      break;
+    }
+    case 'delivered': {
+      for (const c of Object.values(chats)) {
+        const m = c.messages.find(x => x.uid === d.uid && x.out);
+        if (m) { m.status = 'delivered'; updateMsgDom(m.uid, 'delivered'); saveChats(); renderChatList(); break; }
+      }
+      break;
+    }
+    case 'seen': {
+      (d.uids||[]).forEach(u => {
+        for (const c of Object.values(chats)) {
+          const m = c.messages.find(x => x.uid === u && x.out);
+          if (m) { m.status = 'seen'; updateMsgDom(m.uid, 'seen'); }
+        }
+      });
+      saveChats(); renderChatList();
+      break;
+    }
+    case 'typing': {
+      if (activePid !== pid) return;
+      typUntil = Date.now() + 2600;
+      renderHeader();
+      typingRow.hidden = false; scrollBottom();
+      clearTimeout(typHideT);
+      typHideT = setTimeout(()=>{ typingRow.hidden = true; typUntil = 0; renderHeader(); }, 2600);
+      break;
+    }
+  }
+}
+
+/* ============ الإرسال ============ */
+function sendText(){
+  const text = $('ta').value.trim();
+  if (!text || !activePid) return;
+  const c = chats[activePid];
+  const m = { uid: uid(), text: text.slice(0,2000), time: Date.now(), out:true, status:'pending' };
+  c.messages.push(m); c.last = m.time;
+  if (c.messages.length > 400) c.messages.splice(0, c.messages.length - 400);
+  saveChats();
+  $('ta').value = ''; taResize();
+  const nm = msgsEl.querySelector('.no-msgs'); if (nm) nm.remove();
+  appendMsgDom(m); scrollBottom();
+  if (push(activePid, { t:'msg', uid:m.uid, text:m.text, time:m.time })) {
+    m.status = 'sent'; updateMsgDom(m.uid, 'sent'); saveChats(); beepOut();
+  } else ensureConn(activePid);
+  renderChatList();
+}
+
+/* ============ واجهة البروفايل ============ */
+function renderProfile(){
+  const a = $('pfAvatar');
+  a.textContent = initial(me.name); a.style.background = avColor(me.id);
+  $('pfName').textContent = me.name;
+  $('pfId').textContent = me.id;
+}
+
+/* ============ شاشة الترحيب ============ */
+let typingAnim = false;
+ $('nameInput').addEventListener('input', e => { if (!typingAnim) $('tkName').textContent = e.target.value.trim() || '—'; });
+ $('nameForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('nameInput').value.trim();
+  if (v.length < 2) {
+    $('nameErr').hidden = false;
+    $('nameInput').classList.add('shake');
+    setTimeout(()=> $('nameInput').classList.remove('shake'), 400);
+    return;
+  }
+  if (typingAnim) return;
+  $('nameErr').hidden = true;
+  typingAnim = true;
+  $('startBtn').disabled = true;
+  me = { name: v.slice(0,24), id: genId() };
+  $('tkName').textContent = me.name;
+  const el = $('tkId'); el.textContent = '';
+  let i = 0;
+  const t = setInterval(()=>{
+    el.textContent = me.id.slice(0, ++i);
+    if (i >= me.id.length) {
+      clearInterval(t);
+      drawQr($('tkQr'), me.id, 96);
+      if ($('tkQr').hidden) $('tkQrFb').hidden = false;
+      $('tkStamp').classList.add('in');
+      $('startBtn').hidden = true;
+      $('afterGen').hidden = false;
+    }
+  }, 42);
+});
+ $('enterBtn').addEventListener('click', () => {
+  store.set(K.me, me);
+  enterApp();
+  toast('معرّفك جاهز — انسخه وشاركه لتبدأ المراسلة');
+});
+ $('copyIdBtn1').addEventListener('click', () => me && copyText(me.id));
+ $('ghostBtn').addEventListener('click', () => {
+  const u = location.href.split(/[?#]/)[0] + '?guest';
+  const w = window.open(u, '_blank');
+  toast(w ? 'فُتحت نافذة تجربة موازية بسجل مستقل' : 'متصفحك منع النافذة — افتح الرابط مع ?guest');
+});
+
+/* ============ الدخول والتشغيل ============ */
+function enterApp(){
+  $('welcome').hidden = true;
+  $('app').hidden = false;
+  renderProfile(); renderChatList(); setNet('connecting');
+  startPeer();
+  const h = location.hash.match(/MRSL-[A-Z0-9-]{5,}/i); // رابط دعوة: الصفحة#MRSL-XXXX-XXX
+  if (h) setTimeout(()=> openConnectModal(h[0].toUpperCase()), 400);
+}
+const saved = store.get(K.me);
+if (saved && saved.id && saved.name) {
+  me = { name: String(saved.name), id: String(saved.id) };
+  chats = store.get(K.chats) || {};
+  enterApp();
+}
+
+/* ============ أحداث الواجهة ============ */
+const ta = $('ta');
+function taResize(){ ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 130) + 'px'; }
+ta.addEventListener('input', () => {
+  taResize();
+  const c = activePid && conns.get(activePid);
+  if (c && c.open && Date.now() - lastTypeSent > 1500) { try { c.send({ t:'typing' }); lastTypeSent = Date.now(); } catch {} }
+});
+ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } });
+ $('sendBtn').addEventListener('click', sendText);
+
+typingRow = document.createElement('div');
+typingRow.className = 'msg in'; typingRow.hidden = true;
+typingRow.innerHTML = '<div class="bubble tdots"><span></span><span></span><span></span></div>';
+
+ $('newChatBtn').addEventListener('click', () => openConnectModal(''));
+ $('emptyNewBtn').addEventListener('click', () => openConnectModal(''));
+ $('mcClose').addEventListener('click', closeConnectModal);
+ $('mConnect').addEventListener('click', e => { if (e.target === $('mConnect')) closeConnectModal(); });
+ $('mcInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('mcGo').click(); });
+ $('mcGo').addEventListener('click', () => {
+  const pid = normId($('mcInput').value);
+  if (!pid) { $('mcErr').textContent = 'صيغة المعرّف غير صحيحة — ٧ أحرف/أرقام بعد MRSL، دون I وL وO و0 و1.'; $('mcErr').hidden = false; return; }
+  if (pid === me.id) { $('mcErr').textContent = 'هذا معرّفك أنت — شاركه مع غيرك ليكتب إليك.'; $('mcErr').hidden = false; return; }
+  $('mcErr').hidden = true;
+  $('mcGo').textContent = 'جارٍ الاتصال…'; $('mcGo').disabled = true;
+  waitingModal = pid;
+  const c = conns.get(pid);
+  if (c && c.open) onConnOpen(pid); else tryConnect(pid);
+});
+function openConnectModal(prefill){
+  $('mConnect').hidden = false;
+  $('mcInput').value = prefill || '';
+  $('mcErr').hidden = true;
+  $('mcGo').textContent = 'اتصال'; $('mcGo').disabled = false;
+  waitingModal = null;
+  setTimeout(()=> $('mcInput').focus(), 60);
+}
+function closeConnectModal(){
+  $('mConnect').hidden = true; waitingModal = null;
+  $('mcGo').textContent = 'اتصال'; $('mcGo').disabled = false; $('mcErr').hidden = true;
+}
+
+ $('backBtn').addEventListener('click', () => document.body.classList.remove('in-chat'));
+ $('clearBtn').addEventListener('click', e => { e.stopPropagation(); $('confirmClear').hidden = !$('confirmClear').hidden; });
+ $('ccNo').addEventListener('click', () => $('confirmClear').hidden = true);
+ $('ccYes').addEventListener('click', () => {
+  if (!activePid) return;
+  chats[activePid].messages = []; chats[activePid].unread = 0; chats[activePid].last = 0;
+  saveChats(); renderMsgs(chats[activePid]); renderChatList();
+  $('confirmClear').hidden = true;
+  toast('مُسحت المحادثة من جهازك');
+});
+ $('logoutBtn').addEventListener('click', e => { e.stopPropagation(); $('confirmLogout').hidden = !$('confirmLogout').hidden; });
+ $('loNo').addEventListener('click', () => $('confirmLogout').hidden = true);
+ $('loYes').addEventListener('click', () => {
+  try { peer && peer.destroy(); } catch {}
+  store.del(K.me); store.del(K.chats);
+  location.reload();
+});
+document.addEventListener('click', e => {
+  document.querySelectorAll('.pop:not([hidden])').forEach(p => {
+    if (!p.parentElement.contains(e.target)) p.hidden = true;
+  });
+});
+
+ $('copyIdBtn').addEventListener('click', () => copyText(me.id));
+ $('qrCopy').addEventListener('click', () => copyText(me.id));
+ $('qrBtn').addEventListener('click', () => {
+  $('mQr').hidden = false; $('qrId').textContent = me.id;
+  drawQr($('qrCanvas'), me.id, 180);
+  $('qrFb').hidden = !$('qrCanvas').hidden;
+});
+ $('qClose').addEventListener('click', () => $('mQr').hidden = true);
+ $('mQr').addEventListener('click', e => { if (e.target === $('mQr')) $('mQr').hidden = true; });
+
+ $('editNameBtn').addEventListener('click', () => {
+  const inp = $('pfNameInput');
+  $('pfName').hidden = true; inp.hidden = false;
+  inp.value = me.name; inp.focus(); inp.select();
+});
+function commitName(){
+  const inp = $('pfNameInput');
+  if (inp.hidden) return;
+  const v = inp.value.trim();
+  if (v.length >= 2 && v !== me.name) {
+    me.name = v.slice(0,24); store.set(K.me, me);
+    conns.forEach(c => { if (c.open) try { c.send({ t:'hello', name: me.name }); } catch {} });
+    renderProfile(); renderChatList();
+    if (activePid) renderHeader();
+  }
+  inp.hidden = true; $('pfName').hidden = false;
+}
+ $('pfNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') { e.target.value = me.name; e.target.blur(); } });
+ $('pfNameInput').addEventListener('blur', commitName);
+
+ $('muteBtn').addEventListener('click', () => {
+  muted = !muted; store.set(K.mute, muted ? '1' : '0');
+  $('muteUse').setAttribute('href', muted ? '#i-mute' : '#i-vol');
+  toast(muted ? 'أُسكِتت أصوات التنبيه' : 'عادت أصوات التنبيه');
+});
+if (muted) $('muteUse').setAttribute('href', '#i-mute');
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && activePid && chats[activePid]) {
+    const c = chats[activePid];
+    if (c.unread) { c.unread = 0; saveChats(); renderChatList(); }
+    const u = c.messages.filter(m=>!m.out).map(m=>m.uid);
+    if (u.length) sendSeen(activePid, u);
+  }
+});
+</script>
+</body>
+</html>
